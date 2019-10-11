@@ -1208,8 +1208,10 @@ public class RecoverySystem {
         for (int i = 0; names != null && i < names.length; i++) {
             // Do not remove the last_install file since the recovery-persist takes care of it.
             if (names[i].startsWith(LAST_PREFIX) || names[i].equals(LAST_INSTALL_PATH)) continue;
+            if (names[i].equals(RECOVERY_TEST_STATE)) continue;
             if (reservePackage && names[i].equals(BLOCK_MAP_FILE.getName())) continue;
             if (reservePackage && names[i].equals(UNCRYPT_PACKAGE_FILE.getName())) continue;
+            Log.i(TAG,"names[i]:" + names[i]);
 
             recursiveDelete(new File(RECOVERY_DIR, names[i]));
         }
