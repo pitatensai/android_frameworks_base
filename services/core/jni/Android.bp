@@ -70,6 +70,7 @@ cc_library_static {
         "com_android_server_pm_PackageManagerShellCommandDataLoader.cpp",
         "com_android_server_eink_EinkService.cpp",
         "com_android_server_rkdisplay_RkDisplayModes.cpp",
+        "com_android_server_audio_RkAudioSetting.cpp",
         "onload.cpp",
         ":lib_networkStatsFactory_native",
     ],
@@ -78,6 +79,7 @@ cc_library_static {
         "frameworks/base/libs",
         "frameworks/native/services",
         "system/gatekeeper/include",
+        "vendor/rockchip/hardware/interfaces",
     ],
 
     header_libs: [
@@ -180,6 +182,7 @@ cc_defaults {
         "service.incremental",
         "suspend_control_aidl_interface-cpp",
         "liblogwrap",
+        "librksoundsetting",
     ],
 
     static_libs: [
