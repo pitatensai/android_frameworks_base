@@ -109,6 +109,7 @@ public class RecoverySystem {
     private static final File LOG_FILE = new File(RECOVERY_DIR, "log");
     private static final String LAST_INSTALL_PATH = "last_install";
     private static final String LAST_PREFIX = "last_";
+    private static final String RECOVERY_TEST_STATE  = "Recovery_state";
     private static final String ACTION_EUICC_FACTORY_RESET =
             "com.android.internal.action.EUICC_FACTORY_RESET";
     private static final String ACTION_EUICC_REMOVE_INVISIBLE_SUBSCRIPTIONS =
