@@ -409,6 +409,9 @@ public final class Settings {
     // App-link priority tracking, per-user
     final SparseIntArray mNextAppLinkGeneration = new SparseIntArray();
 
+    // Packages that define hardware accelerate mode.
+    final ArrayList<PackagePerformanceSetting>  mPerformancePackages = new ArrayList<PackagePerformanceSetting>();
+
     final StringBuilder mReadMessages = new StringBuilder();
 
     /**
@@ -449,6 +452,7 @@ public final class Settings {
         mRuntimePermissionsPersistence = new RuntimePermissionPersistence(mLock);
 
         mSystemDir = new File(dataDir, "system");
+        File configureDir = Environment.getRootDirectory();
         mSystemDir.mkdirs();
         FileUtils.setPermissions(mSystemDir.toString(),
                 FileUtils.S_IRWXU|FileUtils.S_IRWXG
@@ -456,6 +460,53 @@ public final class Settings {
                 -1, -1);
         mSettingsFilename = new File(mSystemDir, "packages.xml");
         mBackupSettingsFilename = new File(mSystemDir, "packages-backup.xml");
+        File packagePerformanceInfoFile = new File("/odm/etc/package_performance.xml");
+        // Read packages defined in configure file
+        if (!mSettingsFilename.exists()) {
+            if (packagePerformanceInfoFile.exists()) {
+                FileInputStream stream=null;
+                try {
+                    stream = new FileInputStream(packagePerformanceInfoFile);
+                    XmlPullParser parser = Xml.newPullParser();
+                    parser.setInput(stream, null);
+                    int type;
+                    do {
+                        type = parser.next();
+                        if (type == XmlPullParser.START_TAG) {
+                            String tag = parser.getName();
+                            if ("app".equals(tag)) {
+                                String pkgName = parser.getAttributeValue(null, "package");
+                                String pkgMode = parser.getAttributeValue(null, "mode");
+                                PackagePerformanceSetting setting = new PackagePerformanceSetting(pkgName, Integer.valueOf(pkgMode));
+                                mPerformancePackages.add(setting);
+                            }
+                        }
+                    } while (type != XmlPullParser.END_DOCUMENT);
+                } catch (NullPointerException e) {
+                    Slog.w(TAG, "failed parsing " + packagePerformanceInfoFile, e);
+                } catch (NumberFormatException e) {
+                    Slog.w(TAG, "failed parsing " + packagePerformanceInfoFile, e);
+                } catch (XmlPullParserException e) {
+                    Slog.w(TAG, "failed parsing " + packagePerformanceInfoFile, e);
+                } catch (IOException e) {
+                    Slog.w(TAG, "failed parsing " + packagePerformanceInfoFile, e);
+                } catch (IndexOutOfBoundsException e) {
+                    Slog.w(TAG, "failed parsing " + packagePerformanceInfoFile, e);
+                }finally {
+                    if(stream!=null){
+                        try{
+                            stream.close();
+                        }catch(Exception e){
+                            Slog.e(TAG,"close exception"+e);
+                        }
+                    }
+                }
+            }else {
+                Log.w(TAG, "packagePerformanceInfoFile not exist!Closed performance mode!"+packagePerformanceInfoFile.toString());
+            }
+        }else {
+            Log.w(TAG, "mSettingsFilename exist! Closed performance mode!"+packagePerformanceInfoFile.toString());
+        }
         mPackageListFilename = new File(mSystemDir, "packages.list");
         FileUtils.setPermissions(mPackageListFilename, 0640, SYSTEM_UID, PACKAGE_INFO_GID);
         mPrebundledPackagesFilename = new File(mSystemDir, "prebundled-packages.list");
@@ -2530,6 +2581,17 @@ public final class Settings {
                 serializer.endTag(null, "shared-user");
             }
 
+            if (mPerformancePackages.size() > 0) {
+                serializer.startTag(null, "performance-package");
+                for (int j = 0; j < mPerformancePackages.size(); j++) {
+                    serializer.startTag(null, "app");
+                    serializer.attribute(null, "package", mPerformancePackages.get(j).name);
+                    serializer.attribute(null, "mode", String.valueOf(mPerformancePackages.get(j).mode));
+                    serializer.endTag(null, "app");
+                }
+                serializer.endTag(null, "performance-package");
+            }
+
             if (mRenamedPackages.size() > 0) {
                 for (Map.Entry<String, String> e : mRenamedPackages.entrySet()) {
                     serializer.startTag(null, "renamed-package");
@@ -3133,6 +3195,8 @@ public final class Settings {
                     }
                 } else if (tagName.equals("restored-ivi")) {
                     readRestoredIntentFilterVerifications(parser);
+                } else if (tagName.equals("performance-package")) {
+                    readPerformancePackageLP(parser);
                 } else if (tagName.equals("last-platform-version")) {
                     // Upgrade from older XML schema
                     final VersionInfo internal = findOrCreateVersion(
@@ -4298,6 +4362,30 @@ public final class Settings {
         t.traceEnd(); // createNewUser
     }
 
+    private void readPerformancePackageLP(XmlPullParser parser) throws XmlPullParserException,
+            IOException {
+        int outerDepth = parser.getDepth();
+        int type;
+        while ((type = parser.next()) != XmlPullParser.END_DOCUMENT
+                && (type != XmlPullParser.END_TAG || parser.getDepth() > outerDepth)) {
+            if (type == XmlPullParser.END_TAG || type == XmlPullParser.TEXT) {
+                continue;
+            }
+
+            String tagName = parser.getName();
+            if (tagName.equals("app")) {
+                String pkgName = parser.getAttributeValue(null, "package");
+                String pkgMode = parser.getAttributeValue(null, "mode");
+                PackagePerformanceSetting setting = new PackagePerformanceSetting(pkgName,
+                        Integer.valueOf(pkgMode));
+
+                if (pkgName != null) {
+                    mPerformancePackages.add(setting);
+                }
+            }
+        }
+    }
+
     void removeUserLPw(int userId) {
         Set<Entry<String, PackageSetting>> entries = mPackages.entrySet();
         for (Entry<String, PackageSetting> entry : entries) {
@@ -5204,6 +5292,19 @@ public final class Settings {
         final int count = mSharedUsers.size();
         for (int i = 0; i < count; i++) {
             mSharedUsers.valueAt(i).dumpDebug(proto, PackageServiceDumpProto.SHARED_USERS);
+        }
+    }
+
+    void dumpPackagePerformanceMode(PrintWriter pw, DumpState dumpState) {
+        pw.println(" ");
+        pw.println("Package performance messages:");
+        if (!mPerformancePackages.isEmpty()) {
+            for (PackagePerformanceSetting c : mPerformancePackages) {
+                pw.print("      ");
+                pw.print(c.name);
+                pw.print(" -> ");
+                pw.println(c.mode);
+            }
         }
     }
 

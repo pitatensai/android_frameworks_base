@@ -653,6 +653,11 @@ public final class PowerManager {
     public static final String REBOOT_REQUESTED_BY_DEVICE_OWNER = "deviceowner";
 
     /**
+     * @hide
+     */
+    public static final int PERFORMANCE_MODE_NORMAL = 0;
+
+    /**
      * The 'reason' value used when rebooting in safe mode
      * @hide
      */

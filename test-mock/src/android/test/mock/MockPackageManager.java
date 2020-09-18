@@ -1249,4 +1249,12 @@ public class MockPackageManager extends PackageManager {
             int uid, byte[] certificate, @PackageManager.CertificateInputType int type) {
         throw new UnsupportedOperationException();
     }
+
+    /**
+     * @hide
+     */
+    @Override
+    public int getPackagePerformanceMode(String pkgName) {
+        throw new UnsupportedOperationException();
+    }
 }

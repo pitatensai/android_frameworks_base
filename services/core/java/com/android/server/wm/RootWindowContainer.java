@@ -3541,6 +3541,10 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
     void sendPowerHintForLaunchEndIfNeeded() {
         // Trigger launch power hint if activity is launched
         if (mPowerHintSent && mService.mPowerManagerInternal != null) {
+            if (mService.getFrontActivityPerformanceModeLocked() == 1){
+                mPowerHintSent = false;
+                return;
+            }
             mService.mPowerManagerInternal.powerHint(PowerHint.LAUNCH, 0);
             mPowerHintSent = false;
         }

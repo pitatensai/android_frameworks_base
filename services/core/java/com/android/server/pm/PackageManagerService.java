@@ -260,6 +260,7 @@ import android.os.Message;
 import android.os.Parcel;
 import android.os.PatternMatcher;
 import android.os.PersistableBundle;
+import android.os.PowerManager;
 import android.os.Process;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
@@ -21924,6 +21925,8 @@ public class PackageManagerService extends IPackageManager.Stub
                     pw.println("Settings written.");
                     return;
                 }
+            } else if ("perf".equals(cmd)) {
+                dumpState.setDump(DumpState.DUMP_PERF_MODE);
             }
         }
 
@@ -22215,6 +22218,10 @@ public class PackageManagerService extends IPackageManager.Stub
                         }
                     }
                 }
+            }
+
+            if (dumpState.isDumping(DumpState.DUMP_PERF_MODE) && packageName == null) {
+                mSettings.dumpPackagePerformanceMode(pw, dumpState);
             }
 
             if (!checkin && dumpState.isDumping(DumpState.DUMP_FROZEN) && packageName == null) {
@@ -25644,6 +25651,18 @@ public class PackageManagerService extends IPackageManager.Stub
         }
 
         return mProtectedPackages.isPackageStateProtected(userId, packageName);
+    }
+
+    /**
+     * @hide
+     */
+    public int getPackagePerformanceMode(String pkgName) {
+        for (int i = 0; i < mSettings.mPerformancePackages.size(); i++) {
+            if (pkgName.toLowerCase().contains(mSettings.mPerformancePackages.get(i).name.toLowerCase())) {
+                return mSettings.mPerformancePackages.get(i).mode;
+            }
+        }
+        return PowerManager.PERFORMANCE_MODE_NORMAL;
     }
 
     @Override

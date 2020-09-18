@@ -74,6 +74,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.PersistableBundle;
+import android.os.PowerManager;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.StrictMode;
@@ -165,6 +166,16 @@ public class ApplicationPackageManager extends PackageManager {
             }
             return mUserManager;
         }
+    }
+
+    @Override
+    public int getPackagePerformanceMode(String pkgName) {
+        try {
+            return mPM.getPackagePerformanceMode(pkgName);
+        } catch (RemoteException e) {
+            // Should never happen!
+        }
+        return PowerManager.PERFORMANCE_MODE_NORMAL;
     }
 
     @Override
