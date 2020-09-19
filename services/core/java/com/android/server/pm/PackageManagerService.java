@@ -61,6 +61,7 @@ import static android.content.pm.PackageManager.INSTALL_FAILED_PACKAGE_CHANGED;
 import static android.content.pm.PackageManager.INSTALL_FAILED_PROCESS_NOT_DEFINED;
 import static android.content.pm.PackageManager.INSTALL_FAILED_SHARED_USER_INCOMPATIBLE;
 import static android.content.pm.PackageManager.INSTALL_FAILED_TEST_ONLY;
+import static android.content.pm.PackageManager.INSTALL_FAILED_UNINSTALLED_PREBUNDLE;
 import static android.content.pm.PackageManager.INSTALL_FAILED_UPDATE_INCOMPATIBLE;
 import static android.content.pm.PackageManager.INSTALL_FAILED_VERSION_DOWNGRADE;
 import static android.content.pm.PackageManager.INSTALL_INTERNAL;
@@ -98,6 +99,8 @@ import static android.content.pm.PackageManager.RESTRICTION_NONE;
 import static android.content.pm.PackageManager.UNINSTALL_REASON_UNKNOWN;
 import static android.content.pm.PackageParser.SigningDetails.SignatureSchemeVersion.SIGNING_BLOCK_V4;
 import static android.content.pm.PackageParser.isApkFile;
+import static android.content.pm.PackageParser.isDeleteApk;
+import static android.content.pm.PackageParser.readDeleteFile;
 import static android.os.Trace.TRACE_TAG_PACKAGE_MANAGER;
 import static android.os.incremental.IncrementalManager.isIncrementalPath;
 import static android.os.storage.StorageManager.FLAG_STORAGE_CE;
@@ -387,12 +390,14 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlSerializer;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.annotation.Retention;
@@ -531,6 +536,8 @@ public class PackageManagerService extends IPackageManager.Stub
     static final int SCAN_AS_SYSTEM_EXT = 1 << 21;
     static final int SCAN_AS_ODM = 1 << 22;
     static final int SCAN_AS_APK_IN_APEX = 1 << 23;
+    static final int SCAN_AS_PREINSTALL = 1<<24;
+    static final int SCAN_AS_PREBUNDLED_DIR = 1<<25;
 
     @IntDef(flag = true, prefix = { "SCAN_" }, value = {
             SCAN_NO_DEX,
@@ -659,6 +666,12 @@ public class PackageManagerService extends IPackageManager.Stub
     private static final String PACKAGE_MIME_TYPE = "application/vnd.android.package-archive";
 
     private static final String PACKAGE_SCHEME = "package";
+
+    private static final String BUNDLED_PERSIST_DIR = "/odm/bundled_persist-app";
+
+    private static final String BUNDLED_UNINSTALL_GONE_DIR = "/odm/bundled_uninstall_gone-app";
+
+    private static final String DELETE_APK_FILE = "/cache/recovery/last_deleteApkFile.dat";
 
     /** Canonical intent used to identify what counts as a "web browser" app */
     private static final Intent sBrowserIntent;
@@ -3226,6 +3239,8 @@ public class PackageManagerService extends IPackageManager.Stub
                         packageParser, executorService);
 
             }
+
+            preinstallThirdPartyAPK(packageParser,executorService,scanFlags);
 
             packageParser.close();
 
@@ -9063,6 +9078,21 @@ public class PackageManagerService extends IPackageManager.Stub
                     + " flags=0x" + Integer.toHexString(parseFlags));
         }
 
+        ArrayList<String> list = new ArrayList<String>();
+        boolean isPrebundled = (parseFlags & PackageParser.PARSE_IS_PREBUNDLED_DIR) != 0;
+        if (isPrebundled) {
+            synchronized (mPackages) {
+                mSettings.readPrebundledPackagesLPr();
+            }
+        }
+
+        if (scanDir.getAbsolutePath().contains(BUNDLED_UNINSTALL_GONE_DIR)) {
+            if (!readDeleteFile(list)) {
+                Log.e(TAG, "read data failed");
+                return;
+            }
+        }
+
         ParallelPackageParser parallelPackageParser =
                 new ParallelPackageParser(packageParser, executorService);
 
@@ -9074,6 +9104,15 @@ public class PackageManagerService extends IPackageManager.Stub
             if (!isPackage) {
                 // Ignore entries which are not packages
                 continue;
+            }
+            if (file.getAbsolutePath().contains(BUNDLED_UNINSTALL_GONE_DIR)) {
+                if (list != null && list.size() > 0) {
+                    final boolean isdeleteApk = isDeleteApk(file,parseFlags,list);
+                    if (isdeleteApk) {
+                        // Ignore deleted bundled apps
+                        continue;
+                    }
+               }
             }
             parallelPackageParser.submit(file, parseFlags);
             fileCount++;
@@ -9094,6 +9133,17 @@ public class PackageManagerService extends IPackageManager.Stub
                 try {
                     addForInitLI(parseResult.parsedPackage, parseFlags, scanFlags,
                             currentTime, null);
+                    if (isPrebundled) {
+                        final PackageParser.Package pkg;
+                        try {
+                            pkg = new PackageParser().parsePackage(parseResult.scanFile, parseFlags);
+                        } catch (PackageParserException e) {
+                            throw PackageManagerException.from(e);
+                        }
+                        synchronized (mPackages) {
+                            mSettings.markPrebundledPackageInstalledLPr(pkg.packageName);
+                        }
+                    }
                 } catch (PackageManagerException e) {
                     errorCode = e.error;
                     Slog.w(TAG, "Failed to scan " + parseResult.scanFile + ": " + e.getMessage());
@@ -9118,6 +9168,12 @@ public class PackageManagerService extends IPackageManager.Stub
                 logCriticalInfo(Log.WARN,
                         "Deleting invalid package at " + parseResult.scanFile);
                 removeCodePathLI(parseResult.scanFile);
+            }
+        }
+
+        if (isPrebundled) {
+            synchronized (mPackages) {
+                mSettings.writePrebundledPackagesLPr();
             }
         }
     }
@@ -9298,6 +9354,31 @@ public class PackageManagerService extends IPackageManager.Stub
             @ParseFlags int parseFlags, @ScanFlags int scanFlags, long currentTime,
             @Nullable UserHandle user)
                     throws PackageManagerException {
+        if ((parseFlags & PackageParser.PARSE_IS_PREBUNDLED_DIR) != 0) {
+            synchronized (mPackages) {
+                PackageSetting existingSettings = mSettings.getPackageLPr(parsedPackage.getPackageName());
+                if (mSettings.wasPrebundledPackageInstalledLPr(parsedPackage.getPackageName()) &&
+                        existingSettings == null) {
+                    // The prebundled app was installed at some point in time, but now it is
+                    // gone.  Assume that the user uninstalled it intentionally: do not reinstall.
+                    throw new PackageManagerException(INSTALL_FAILED_UNINSTALLED_PREBUNDLE,
+                            "skip reinstall for " + parsedPackage.getPackageName());
+                } else if (existingSettings != null
+                        && existingSettings.versionCode >= parsedPackage.getVersionCode()
+                        && !existingSettings.codePathString.contains(
+                        Environment.getPrebundledUninstallBackDirectory().getPath())
+                        && !existingSettings.codePathString.contains(
+                        Environment.getPrebundledUninstallGoneDirectory().getPath())) {
+                    // This app is installed in a location that is not the prebundled location
+                    // and has a higher (or same) version as the prebundled one.  Skip
+                    // installing the prebundled version.
+                    Slog.d(TAG, parsedPackage.getPackageName() + " already installed at " +
+                            existingSettings.codePathString);
+                    return null; // return null so we still mark package as installed
+                }
+            }
+        }
+
         final boolean scanSystemPartition = (parseFlags & PackageParser.PARSE_IS_SYSTEM_DIR) != 0;
         final String renamedPkgName;
         final PackageSetting disabledPkgSetting;
@@ -9426,6 +9507,7 @@ public class PackageManagerService extends IPackageManager.Stub
         // cases, only data in Signing Block is verified instead of the whole file.
         // TODO(b/136132412): skip for Incremental installation
         final boolean skipVerify = scanSystemPartition
+                || ((parseFlags & PackageParser.PARSE_IS_PREBUNDLED_DIR) != 0)
                 || (forceCollect && canSkipForcedPackageVerification(parsedPackage));
         collectCertificatesLI(pkgSetting, parsedPackage, forceCollect, skipVerify);
 
@@ -11518,7 +11600,7 @@ public class PackageManagerService extends IPackageManager.Stub
         final String cpuAbiOverride = deriveAbiOverride(request.cpuAbiOverride, pkgSetting);
 
         if ((scanFlags & SCAN_NEW_INSTALL) == 0) {
-            if (needToDeriveAbi) {
+            if (needToDeriveAbi && (scanFlags & SCAN_AS_PREBUNDLED_DIR) == 0) {
                 Trace.traceBegin(TRACE_TAG_PACKAGE_MANAGER, "derivePackageAbi");
                 final boolean extractNativeLibs = !AndroidPackageUtils.isLibrary(parsedPackage);
                 final Pair<PackageAbiHelper.Abis, PackageAbiHelper.NativeLibraryPaths> derivedAbi =
@@ -19242,6 +19324,38 @@ public class PackageManagerService extends IPackageManager.Stub
             if (DEBUG_REMOVE) Slog.d(TAG, "Removing non-system package: " + ps.name);
             deleteInstalledPackageLIF(ps, deleteCodeAndResources, flags, allUserHandles,
                     outInfo, writeSettings);
+            if (ps.pkg.getCodePath().contains(BUNDLED_UNINSTALL_GONE_DIR)) {
+                File deleteApkFile = new File(DELETE_APK_FILE);
+                if(!deleteApkFile.exists()) {
+                    try {
+                        deleteApkFile.createNewFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        Slog.w (TAG,"create file failed: " + DELETE_APK_FILE);
+                        return;
+                    }
+                }
+                BufferedWriter fileWriter  = null;
+                try {
+                    fileWriter = new BufferedWriter(new FileWriter(deleteApkFile,true));
+                    fileWriter.append(ps.pkg.getPackageName());
+                    fileWriter.newLine();
+                    fileWriter.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Slog.w(TAG,"write file failed: " + DELETE_APK_FILE);
+                } finally {
+                    if (fileWriter != null) {
+                        try {
+                            fileWriter.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return;
+                        }
+                        fileWriter = null;
+                    }
+                }
+            }
         }
 
         // If the package removed had SUSPEND_APPS, unset any restrictions that might have been in
@@ -25579,6 +25693,35 @@ public class PackageManagerService extends IPackageManager.Stub
     @Override
     public List<String> getMimeGroup(String packageName, String mimeGroup) {
         return mSettings.mPackages.get(packageName).getMimeGroup(mimeGroup);
+    }
+
+    private void preinstallThirdPartyAPK(PackageParser2 packageParser, ExecutorService executorService,int scanFlags){
+        preinstallPrebundledpersist(packageParser,executorService,scanFlags);
+        preinstallPrebundledUninstallBack(packageParser,executorService,scanFlags);
+        preinstallPrebundledUninstallGone(packageParser,executorService,scanFlags);
+    }
+
+    private void preinstallPrebundledpersist(PackageParser2 packageParser, ExecutorService executorService,int scanFlags){
+        scanDirTracedLI(new File(BUNDLED_PERSIST_DIR),
+                    mDefParseFlags | PackageParser.PARSE_IS_SYSTEM_DIR
+                    | PackageParser.PARSE_IS_PREINSTALL,
+                    scanFlags | SCAN_AS_PREINSTALL
+                    | SCAN_AS_SYSTEM,
+                    0,packageParser, executorService);
+    }
+
+    private void preinstallPrebundledUninstallBack(PackageParser2 packageParser, ExecutorService executorService,int scanFlags){
+        scanDirTracedLI(Environment.getPrebundledUninstallBackDirectory(),
+                    mDefParseFlags | PackageParser.PARSE_IS_PREBUNDLED_DIR,
+                    scanFlags | SCAN_AS_PREBUNDLED_DIR,
+                    0,packageParser, executorService);
+    }
+
+    private void preinstallPrebundledUninstallGone(PackageParser2 packageParser, ExecutorService executorService,int scanFlags){
+        scanDirTracedLI(Environment.getPrebundledUninstallGoneDirectory(),
+                    mDefParseFlags | PackageParser.PARSE_IS_PREBUNDLED_DIR,
+                    scanFlags | SCAN_AS_PREBUNDLED_DIR,
+                    0,packageParser, executorService);
     }
 
     static class ActiveInstallSession {
