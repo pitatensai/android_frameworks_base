@@ -3269,6 +3269,15 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
                 Log.v(TAG,"getPackageFerformanceMode--"+r.mActivityComponent.toString()+"----"+r.packageName);
                 mode = AppGlobals.getPackageManager().getPackagePerformanceMode(
                         r.mActivityComponent.toString());
+                // Only set cts_gts.antutu to true when starting antutu
+                if ("true".equals(SystemProperties.get("persist.vendor.rk_vulkan"))) {
+                    if (r.packageName.contains("com.antutu.ABenchMark") ||
+                        r.packageName.contains("com.antutu.benchmark.full")) {
+                        SystemProperties.set("cts_gts.antutu", "true");
+                    } else if (SystemProperties.getBoolean("cts_gts.antutu", false)) {
+                        SystemProperties.set("cts_gts.antutu", "false");
+                    }
+                }
             } catch (RemoteException e) {
             }
         }
