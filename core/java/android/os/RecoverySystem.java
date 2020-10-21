@@ -617,7 +617,8 @@ public class RecoverySystem {
             String reason = PowerManager.REBOOT_RECOVERY_UPDATE;
 
             // On TV, reboot quiescently if the screen is off
-            if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                || context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEVISION)) {
                 DisplayManager dm = context.getSystemService(DisplayManager.class);
                 if (dm.getDisplay(DEFAULT_DISPLAY).getState() != Display.STATE_ON) {
                     reason += ",quiescent";

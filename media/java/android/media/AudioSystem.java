@@ -1793,7 +1793,8 @@ public class AudioSystem
         if (((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE))
                 .isVoiceCapable()) {
             return PLATFORM_VOICE;
-        } else if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+        } else if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+            || context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEVISION)) {
             return PLATFORM_TELEVISION;
         } else {
             return PLATFORM_DEFAULT;

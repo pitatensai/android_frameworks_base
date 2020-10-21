@@ -148,6 +148,7 @@ public class NotificationChannels extends SystemUI {
 
     private static boolean isTv(Context context) {
         PackageManager packageManager = context.getPackageManager();
-        return packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+            || packageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION);
     }
 }

@@ -26,6 +26,7 @@ import static android.content.Context.WINDOW_SERVICE;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.content.pm.PackageManager.FEATURE_HDMI_CEC;
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
+import static android.content.pm.PackageManager.FEATURE_TELEVISION;
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
@@ -1749,7 +1750,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mDisplayManager = mContext.getSystemService(DisplayManager.class);
         mPackageManager = mContext.getPackageManager();
         mHasFeatureWatch = mPackageManager.hasSystemFeature(FEATURE_WATCH);
-        mHasFeatureLeanback = mPackageManager.hasSystemFeature(FEATURE_LEANBACK);
+        mHasFeatureLeanback = mPackageManager.hasSystemFeature(FEATURE_LEANBACK)
+            || mPackageManager.hasSystemFeature(FEATURE_TELEVISION);
         mHasFeatureAuto = mPackageManager.hasSystemFeature(FEATURE_AUTOMOTIVE);
         mHasFeatureHdmiCec = mPackageManager.hasSystemFeature(FEATURE_HDMI_CEC);
         mAccessibilityShortcutController =
@@ -4862,7 +4864,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             @Override public void run() {
                 if (mBootMsgDialog == null) {
                     int theme;
-                    if (mPackageManager.hasSystemFeature(FEATURE_LEANBACK)) {
+                    if (mPackageManager.hasSystemFeature(FEATURE_LEANBACK)
+                        || mPackageManager.hasSystemFeature(FEATURE_TELEVISION)) {
                         theme = com.android.internal.R.style.Theme_Leanback_Dialog_Alert;
                     } else {
                         theme = 0;
