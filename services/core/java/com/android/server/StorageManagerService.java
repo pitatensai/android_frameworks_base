@@ -4761,6 +4761,10 @@ class StorageManagerService extends IStorageManager.Stub
                     switch(code) {
                         case OP_REQUEST_INSTALL_PACKAGES:
                             // Always kill regardless of op change, to remount apps /storage
+
+                            if ("com.android.rk".equals(packageName)) {
+                                return;//use break;?
+                            }
                             killAppForOpChange(code, uid);
                             return;
                         case OP_MANAGE_EXTERNAL_STORAGE:
