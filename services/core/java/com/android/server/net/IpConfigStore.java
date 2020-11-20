@@ -255,7 +255,7 @@ public class IpConfigStore {
             int version = in.readInt();
             if (version != 3 && version != 2 && version != 1) {
                 loge("Bad version on IP configuration file, ignore read");
-                return null;
+                return new ArrayMap<>(0);
             }
 
             while (true) {
