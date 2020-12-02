@@ -1016,7 +1016,7 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
 
         ButtonDispatcher screenshotButton = mNavigationBarView.getScreenshotButton();
         screenshotButton.setOnClickListener(this:: screenshotClick);
-        screenshotButton.setOnTouchListener(this:: screenshotTouch);
+        //screenshotButton.setOnTouchListener(this:: screenshotTouch);
         boolean isShow=Settings.System.getInt(getContext().getContentResolver(), Settings.System.SCREENSHOT_BUTTON_SHOW, 1) == 1;
         if(isShow){
             screenshotButton.setVisibility(View.VISIBLE);
