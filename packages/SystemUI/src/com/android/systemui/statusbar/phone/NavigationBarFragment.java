@@ -1021,7 +1021,7 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
             refreshButton.setOnClickListener(this:: onRefreshClick);
             refreshButton.setOnTouchListener(this:: onRefreshTouch);
             refreshButton.setVisibility(View.VISIBLE);
-        } else{
+        } else {
             ButtonDispatcher refreshButton = mNavigationBarView.getRefreshButton();
             refreshButton.setLongClickable(true);
             refreshButton.setOnClickListener(this:: onRefreshClick);

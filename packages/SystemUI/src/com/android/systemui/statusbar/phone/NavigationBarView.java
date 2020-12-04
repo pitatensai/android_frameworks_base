@@ -335,9 +335,7 @@ public class NavigationBarView extends FrameLayout implements
         mButtonDispatchers.put(R.id.menu_container, mContextualButtonGroup);
         mButtonDispatchers.put(R.id.screenshot, new ButtonDispatcher(R.id.screenshot));
         mButtonDispatchers.put(R.id.volume_add, new ButtonDispatcher(R.id.volume_add));
-        if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_EINK)) {
-            mButtonDispatchers.put(R.id.refresh, new ButtonDispatcher(R.id.refresh));
-        }
+        mButtonDispatchers.put(R.id.refresh, new ButtonDispatcher(R.id.refresh));
         mButtonDispatchers.put(R.id.volume_sub, new ButtonDispatcher(R.id.volume_sub));
         mDeadZone = new DeadZone(this);
 
@@ -543,9 +541,7 @@ public class NavigationBarView extends FrameLayout implements
         if (orientationChange || densityChange || dirChange) {
             mBackIcon = getBackDrawable();
         }
-        if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_EINK)) {
-            mRefreshIcon = getDrawable(R.drawable.ic_sysbar_refresh_button);
-        }
+        mRefreshIcon = getDrawable(R.drawable.ic_sysbar_refresh_button);
         mVolumeAddIcon = getDrawable(R.drawable.ic_sysbar_volume_add_button);
         mVolumeSubIcon = getDrawable(R.drawable.ic_sysbar_volume_sub_button);
         mScreenshotIcon = getDrawable(R.drawable.ic_sysbar_capture_button);
@@ -702,9 +698,7 @@ public class NavigationBarView extends FrameLayout implements
         }
         getHomeButton().setImageDrawable(homeIcon);
         getBackButton().setImageDrawable(backIcon);
-        if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_EINK)) {
-            getRefreshButton().setImageDrawable(mRefreshIcon);
-        }
+        getRefreshButton().setImageDrawable(mRefreshIcon);
         getVolumeAddButton().setImageDrawable(mVolumeAddIcon);
         getVolumeSubButton().setImageDrawable(mVolumeSubIcon);
         getScreenshotButton().setImageDrawable(mScreenshotIcon);
