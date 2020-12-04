@@ -405,9 +405,7 @@ public class NavigationBarInflaterView extends FrameLayout
         } else if (VOLUME_ADD.equals(button)) {
             v = inflater.inflate(R.layout.volume_add, parent, false);
         } else if (REFRESH.equals(button)) {
-            if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_EINK)){
-                v = inflater.inflate(R.layout.refresh, parent, false);
-            }
+            v = inflater.inflate(R.layout.refresh, parent, false);
         } else if (VOLUME_SUB.equals(button)) {
             v = inflater.inflate(R.layout.volume_sub, parent, false);
         } else if (button.startsWith(KEY)) {
