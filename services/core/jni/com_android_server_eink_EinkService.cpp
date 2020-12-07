@@ -143,6 +143,23 @@ jint com_android_server_eink_EinkService_init(JNIEnv *env, jclass clazz)
     return result;
 }
 
+jint com_android_server_eink_EinkService_standby(JNIEnv *env, jclass clazz)
+{
+    int result=0;
+    ALOGV("com_android_server_eink_EinkService_standby");
+    property_set("ctl.start","standby");
+    return result;
+}
+
+jint com_android_server_eink_EinkService_quitStandby(JNIEnv *env, jclass clazz)
+{
+    int result=0;
+    ALOGV("com_android_server_eink_EinkService_quitStandby");
+    property_set("ctl.stop","standby");
+    return result;
+}
+
+
 jint com_android_server_eink_EinkService_kill(JNIEnv *env, jclass clazz)
 {
     int result=0;
@@ -240,6 +257,9 @@ static const JNINativeMethod gMethods[] = {
     /* name,                        signature,      funcPtr */
     { "init_native","()I",(void *)com_android_server_eink_EinkService_init  },
     { "kill_native","()I",(void *)com_android_server_eink_EinkService_kill  },
+    { "standby_native","()I",(void *)com_android_server_eink_EinkService_standby  },
+    { "quitStandby_native","()I",(void *)com_android_server_eink_EinkService_quitStandby  },
+    
 };
 
 /*

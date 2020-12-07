@@ -22,6 +22,8 @@ interface IEinkManager
 {
     int init();
     int kill();
+    int standby();
+    int quitStandby();
     void setProperty(String key, String value);
 }
 

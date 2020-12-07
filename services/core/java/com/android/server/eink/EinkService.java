@@ -132,10 +132,23 @@ public class EinkService extends IEinkManager.Stub {
         return 0;
     }
 
+    public int standby() {
+           standby_native();
+           return 0;
+       }
+
+    public int quitStandby() {
+           quitStandby_native();
+           return 0;
+       }
+
 
 /*jni interface*/
     public native int init_native();
     public native int kill_native();
+    public native int standby_native();
+    
+    public native int quitStandby_native();
 }
 
 
