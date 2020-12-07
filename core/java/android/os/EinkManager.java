@@ -170,4 +170,23 @@ public class EinkMode {
             return -1;
         }
     }
+
+        public int standby(){
+        try {
+            LOG("EinkManager.standby()");
+            return mService.standby();
+        } catch (RemoteException e) {
+            e.rethrowFromSystemServer();
+            return -1;
+        }
+    }
+        public int quitStandby(){
+        try {
+            LOG("EinkManager.quitStandby()");
+            return mService.quitStandby();
+        } catch (RemoteException e) {
+            e.rethrowFromSystemServer();
+            return -1;
+        }
+    }
 }
