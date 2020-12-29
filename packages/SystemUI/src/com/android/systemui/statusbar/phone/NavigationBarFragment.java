@@ -160,7 +160,7 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     /** Allow some time inbetween the long press for back and recents. */
     private static final int LOCK_TO_APP_GESTURE_TOLERENCE = 200;
     private static final long AUTODIM_TIMEOUT_MS = 2250;
-    private static final long SCREENSHOT_TIME_INTERVAL = 600;
+    private static final long SCREENSHOT_TIME_INTERVAL = 3000;
 
     private final AccessibilityManagerWrapper mAccessibilityManagerWrapper;
     protected final AssistManager mAssistManager;
