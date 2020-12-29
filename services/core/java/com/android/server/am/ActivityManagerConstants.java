@@ -25,6 +25,7 @@ import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
+import android.os.SystemProperties;
 import android.provider.DeviceConfig;
 import android.provider.DeviceConfig.OnPropertiesChangedListener;
 import android.provider.DeviceConfig.Properties;
@@ -89,7 +90,8 @@ final class ActivityManagerConstants extends ContentObserver {
     static final String KEY_TOP_TO_FGS_GRACE_DURATION = "top_to_fgs_grace_duration";
     static final String KEY_PENDINGINTENT_WARNING_THRESHOLD = "pendingintent_warning_threshold";
 
-    private static final int DEFAULT_MAX_CACHED_PROCESSES = 32;
+    private static final int DEFAULT_MAX_CACHED_PROCESSES =
+            SystemProperties.getInt("sys.lmk.vendor.max_cached_proc", 32);
     private static final long DEFAULT_BACKGROUND_SETTLE_TIME = 60*1000;
     private static final long DEFAULT_FGSERVICE_MIN_SHOWN_TIME = 2*1000;
     private static final long DEFAULT_FGSERVICE_MIN_REPORT_TIME = 3*1000;
