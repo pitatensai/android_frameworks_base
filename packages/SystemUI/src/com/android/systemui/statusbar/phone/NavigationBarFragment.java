@@ -235,6 +235,7 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     private boolean mShowOrientedHandleForImmersiveMode;
     private static EinkManager mEinkManager;
     private long mLastClickScreenshotTime = 0;
+    private String mPreMode = null;
 
     @com.android.internal.annotations.VisibleForTesting
     public enum NavBarActionEvent implements UiEventLogger.UiEventEnum {
@@ -1018,18 +1019,19 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
 
         ButtonDispatcher backButton = mNavigationBarView.getBackButton();
         backButton.setLongClickable(true);
+        ButtonDispatcher refreshButton = mNavigationBarView.getRefreshButton();
+        ButtonDispatcher switchModeButton = mNavigationBarView.getSwitchModeButton();
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_EINK)) {
-            ButtonDispatcher refreshButton = mNavigationBarView.getRefreshButton();
             refreshButton.setLongClickable(true);
             refreshButton.setOnClickListener(this:: onRefreshClick);
             refreshButton.setOnTouchListener(this:: onRefreshTouch);
             refreshButton.setVisibility(View.VISIBLE);
+            switchModeButton.setLongClickable(true);
+            switchModeButton.setOnClickListener(this:: onSwitchModeClick);
+            switchModeButton.setVisibility(View.VISIBLE);
         } else {
-            ButtonDispatcher refreshButton = mNavigationBarView.getRefreshButton();
-            refreshButton.setLongClickable(true);
-            refreshButton.setOnClickListener(this:: onRefreshClick);
-            refreshButton.setOnTouchListener(this:: onRefreshTouch);
             refreshButton.setVisibility(View.GONE);
+            switchModeButton.setVisibility(View.GONE);
         }
         ButtonDispatcher homeButton = mNavigationBarView.getHomeButton();
         homeButton.setOnTouchListener(this::onHomeTouch);
@@ -1083,6 +1085,18 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
 
     private void onRefreshClick(View v) {
             onRefreshRepaintEverything();
+    }
+
+    private void onSwitchModeClick(View v) {
+        if(mEinkManager != null){
+            String curMode = mEinkManager.getMode();
+            if(!EinkManager.EinkMode.EPD_A2.equals(curMode)){
+                mPreMode = curMode;
+                mEinkManager.setMode(EinkManager.EinkMode.EPD_A2);
+            } else if(mPreMode != null){
+                mEinkManager.setMode(mPreMode);
+            }
+        }
     }
 
     private boolean onHomeTouch(View v, MotionEvent event) {
