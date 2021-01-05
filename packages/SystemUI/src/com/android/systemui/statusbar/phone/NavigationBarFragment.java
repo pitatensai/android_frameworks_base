@@ -1065,6 +1065,7 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     private void onRefreshRepaintEverything(){
         if (mEinkManager != null) {
             mEinkManager.sendOneFullFrame();
+            mNavigationBarView.postInvalidate();
         }
     }
 
