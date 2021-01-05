@@ -58,6 +58,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import android.view.IWindowManager;
+import android.os.IBinder;
+import android.view.SurfaceControl;
 
 public final class ShutdownThread extends Thread {
     // constants
@@ -570,7 +572,8 @@ public final class ShutdownThread extends Thread {
             wait_shutdownanim_end();
             thaw_orien_shutdownanim();
         }
-        mPowerManager.goToSleep(SystemClock.uptimeMillis());
+//Eink:fix sleep image shows when poweroff
+        //mPowerManager.goToSleep(SystemClock.uptimeMillis());
         // Remaining work will be done by init, including vold shutdown
         rebootOrShutdown(mContext, mReboot, mReason);
     }
@@ -705,6 +708,14 @@ public final class ShutdownThread extends Thread {
             } catch (InterruptedException unused) {
             }
         }
+        SystemProperties.set("sys.power.shutdown", "1");
+        IBinder token = SurfaceControl.getInternalDisplayToken();
+        SurfaceControl.setDisplayPowerMode(token,SurfaceControl.POWER_MODE_OFF);
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException unused) {
+        }
+
         // Shutdown power
         Log.i(TAG, "Performing low-level shutdown...");
         PowerManagerService.lowLevelShutdown(reason);
