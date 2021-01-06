@@ -1683,18 +1683,11 @@ public final class PowerManagerService extends SystemService
         if (DEBUG_SPEW) {
             Slog.d(TAG, "wakeUpNoUpdateLocked: eventTime=" + eventTime + ", uid=" + reasonUid);
         }
-        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_EINK)) {
-            if(mEinkManager == null){
-                mEinkManager = (EinkManager) mContext.getSystemService(Context.EINK_SERVICE);
-            }
-            if(mEinkManager != null){
-                mEinkManager.quitStandby();
-            }
-            if (eventTime < mLastSleepTime || getWakefulnessLocked() == WAKEFULNESS_AWAKE
-                    || mForceSuspendActive || !mSystemReady) {
-                return false;
-            }
+        if (eventTime < mLastSleepTime || getWakefulnessLocked() == WAKEFULNESS_AWAKE
+                || mForceSuspendActive || !mSystemReady) {
+            return false;
         }
+
         Trace.asyncTraceBegin(Trace.TRACE_TAG_POWER, TRACE_SCREEN_ON, 0);
 
         Trace.traceBegin(Trace.TRACE_TAG_POWER, "wakeUp");
@@ -1744,19 +1737,7 @@ public final class PowerManagerService extends SystemService
             Slog.d(TAG, "goToSleepNoUpdateLocked: eventTime=" + eventTime
                     + ", reason=" + reason + ", flags=" + flags + ", uid=" + uid);
         }
-        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_EINK)) {
-            if(mEinkManager == null){
-                mEinkManager = (EinkManager) mContext.getSystemService(Context.EINK_SERVICE);
-            }
-            if(mEinkManager != null){
-                mEinkManager.standby();
-            }
-            try {
-                Thread.sleep(1 * 1000L);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
+
         if (eventTime < mLastWakeTime
                 || getWakefulnessLocked() == WAKEFULNESS_ASLEEP
                 || getWakefulnessLocked() == WAKEFULNESS_DOZING
