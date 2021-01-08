@@ -44,13 +44,14 @@ public  class EinkManager {
 
     private static final String TAG = "EinkManager";
     private static final boolean DEBUG = true;
-    public static final boolean EINK = false;
+    private static boolean EINK = true;
     private static int num =1;
 public class EinkMode {
 
     private EinkMode(){
     }
-
+    
+    public static final String EPD_NULL ="-1";
     public static final String EPD_AUTO ="0";
     public static final String EPD_OVERLAY ="1";
     public static final String EPD_FULL_GC16 ="2";
@@ -64,20 +65,13 @@ public class EinkMode {
     public static final String EPD_PART_GLD16 ="10";
     public static final String EPD_PART_GCC16 ="11";
     public static final String EPD_A2 ="12";
-    public static final String EPD_A2_DITHER ="13";
-    public static final String EPD_DU ="14";
-    public static final String EPD_RESET ="15";
-    public static final String EPD_SUSPEND ="16";
-    public static final String EPD_RESUME ="17";
-    public static final String EPD_POWER_OFF ="18";
-    public static final String EPD_FULL_DIRECT ="19";
-    public static final String EPD_PART_DIRECT ="20";
-    public static final String EPD_A2_DIRECT ="21";
-    public static final String EPD_DU_DIRECT ="22";
-    public static final String EPD_AUTO_DIRECT ="23";
-    public static final String EPD_OVERLAY_DIRECT ="24";
-    public static final String EPD_PART_EINK ="25";
-    public static final String EPD_FULL_EINK ="26";
+    public static final String EPD_DU ="13";
+    public static final String EPD_RESET ="14";
+    public static final String EPD_SUSPEND ="15";
+    public static final String EPD_RESUME ="16";
+    public static final String EPD_POWER_OFF ="17";
+    public static final String EPD_PART_EINK ="18";
+    public static final String EPD_FULL_EINK ="19";
 }
 
 
@@ -109,6 +103,14 @@ public class EinkMode {
         mService = service;
         mHandler = handler;
     }
+
+    public static void setEinkEnabled(){
+            EINK = true;
+        }
+
+    public static boolean getEinkEnabled(){
+            return EINK;
+        }
 
     public void sendOneFullFrame(){
         try {
