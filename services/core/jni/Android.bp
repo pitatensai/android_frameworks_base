@@ -132,6 +132,7 @@ cc_defaults {
         "libsensorservicehidl",
         "libgui",
         "libusbhost",
+        "libsuspend",
         "libtinyalsa",
         "libEGL",
         "libGLESv2",

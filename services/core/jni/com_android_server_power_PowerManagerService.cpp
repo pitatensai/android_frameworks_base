@@ -43,6 +43,7 @@
 #include <utils/misc.h>
 #include <utils/String8.h>
 #include <utils/Log.h>
+#include <suspend/autosuspend.h>
 
 #include "com_android_server_power_PowerManagerService.h"
 
@@ -62,6 +63,7 @@ using IPowerV1_0 = android::hardware::power::V1_0::IPower;
 using IPowerAidl = android::hardware::power::IPower;
 
 namespace android {
+static bool gScreenOn;
 
 // ----------------------------------------------------------------------------
 
@@ -457,12 +459,14 @@ static void nativeSetInteractive(JNIEnv* /* env */, jclass /* clazz */, jboolean
 static void nativeSetAutoSuspend(JNIEnv* /* env */, jclass /* clazz */, jboolean enable) {
     if (enable) {
         android::base::Timer t;
+        gScreenOn = false;
         enableAutoSuspend();
         if (t.duration() > 100ms) {
             ALOGD("Excessive delay in autosuspend_enable() while turning screen off");
         }
     } else {
         android::base::Timer t;
+        gScreenOn = true;
         disableAutoSuspend();
         if (t.duration() > 100ms) {
             ALOGD("Excessive delay in autosuspend_disable() while turning screen on");
@@ -511,6 +515,14 @@ static void nativeSetFeature(JNIEnv* /* env */, jclass /* clazz */, jint feature
     }
 }
 
+void android_server_PowerManagerService_idle() {
+    autosuspend_idle(gScreenOn);
+}
+void android_server_PowerManagerService_wake() {
+    autosuspend_wake();
+}
+
+
 static bool nativeForceSuspend(JNIEnv* /* env */, jclass /* clazz */) {
     bool retval = false;
     getSuspendControl()->forceSuspend(&retval);
@@ -533,6 +545,9 @@ static const JNINativeMethod gPowerManagerServiceMethods[] = {
         {"nativeSetPowerBoost", "(II)V", (void*)nativeSetPowerBoost},
         {"nativeSetPowerMode", "(IZ)Z", (void*)nativeSetPowerMode},
         {"nativeSetFeature", "(II)V", (void*)nativeSetFeature},
+        { "nativeIdle", "()V", (void*) android_server_PowerManagerService_idle },
+        { "nativeWake", "()V", (void*) android_server_PowerManagerService_wake },
+
 };
 
 #define FIND_CLASS(var, className) \
@@ -565,6 +580,7 @@ int register_android_server_PowerManagerService(JNIEnv* env) {
     for (int i = 0; i <= USER_ACTIVITY_EVENT_LAST; i++) {
         gLastEventTime[i] = LLONG_MIN;
     }
+    gScreenOn = true;
     gPowerManagerServiceObj = NULL;
     return 0;
 }
