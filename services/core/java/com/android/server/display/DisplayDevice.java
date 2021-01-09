@@ -25,7 +25,7 @@ import android.view.Surface;
 import android.view.SurfaceControl;
 
 import java.io.PrintWriter;
-
+import android.os.SystemProperties;
 /**
  * Represents a physical display device such as the built-in display
  * an external monitor, or a WiFi display.
@@ -251,8 +251,9 @@ abstract class DisplayDevice {
      * physical and logical rects based on the display's current projection.
      */
     public final void populateViewportLocked(DisplayViewport viewport) {
-        viewport.orientation = mCurrentOrientation;
-
+        //viewport.orientation = mCurrentOrientation;
+        int rotation=Integer.valueOf(SystemProperties.get("ro.surface_flinger.primary_display_orientation","ORIENTATION_0").split("_")[1])/90;
+	viewport.orientation = (mCurrentOrientation+rotation)%4;
         if (mCurrentLayerStackRect != null) {
             viewport.logicalFrame.set(mCurrentLayerStackRect);
         } else {
