@@ -1097,6 +1097,7 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
             } else if(mPreMode != null){
                 mEinkManager.setMode(mPreMode);
             }
+            mNavigationBarView.postInvalidate();
         }
     }
 
