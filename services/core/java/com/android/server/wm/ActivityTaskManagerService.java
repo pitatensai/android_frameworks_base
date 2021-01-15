@@ -6503,7 +6503,7 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
                 } catch (RemoteException e) {
                 }
 
-                if (!getContext().getPackageManager().hasSystemFeature(FEATURE_EINK)/*EINK*/ &&
+                if (!mContext.getPackageManager().hasSystemFeature(FEATURE_EINK)/*EINK*/ &&
                     !Build.isBuildConsistent()) {
                     Slog.e(TAG, "Build fingerprint is not consistent, warning user");
                     mUiHandler.post(() -> {
