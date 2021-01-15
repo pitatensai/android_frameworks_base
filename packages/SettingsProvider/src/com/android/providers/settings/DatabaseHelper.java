@@ -2461,7 +2461,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
             loadSetting(stmt, Settings.Global.MODE_RINGER,
                     AudioManager.RINGER_MODE_NORMAL);
 
-            loadDefaultAnimationSettings(stmt);
+            //loadDefaultAnimationSettings(stmt);
+            loadSetting(stmt, Settings.System.WINDOW_ANIMATION_SCALE, "0");
+            loadSetting(stmt, Settings.System.TRANSITION_ANIMATION_SCALE, "0");
+            loadSetting(stmt, Settings.System.ANIMATOR_DURATION_SCALE, "0");
 
             // --- Previously in 'secure'
             loadBooleanSetting(stmt, Settings.Global.WIFI_ON,
