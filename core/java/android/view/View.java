@@ -26832,7 +26832,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                 overScrollMode != OVER_SCROLL_NEVER) {
             throw new IllegalArgumentException("Invalid overscroll mode " + overScrollMode);
         }
-        mOverScrollMode = overScrollMode;
+        mOverScrollMode = OVER_SCROLL_NEVER;//overScrollMode;
     }
 
     /**
