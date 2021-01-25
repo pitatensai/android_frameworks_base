@@ -879,7 +879,7 @@ public final class PowerManagerService extends SystemService
     //add for Eink bright screen standby
     private native void nativeIdle();
     private native void nativeWake();
-    private boolean mSpew = true;
+    private boolean mSpew = false;
     private int mIdleDelay;
     private boolean mMusicPlaying = false;
     private boolean mUserBootComplete = false;
