@@ -3043,6 +3043,32 @@ public class PermissionManagerService extends IPermissionManager.Stub {
                 }
             }
 
+            //Slog.d(TAG, "PMS=====" + pkg..getPackageName());
+            if((null != pkg && null != pkg.getPackageName() && null != pkg.getRequestedPermissions())
+                && (pkg.getPackageName().equals("com.wetao.elauncher")
+                    || pkg.getPackageName().equals("com.yuewen.ebook")
+                    || pkg.getPackageName().equals("com.rockchip.ebook"))) {
+                int permissionsSize = pkg.getRequestedPermissions().size();
+                for (int i = 0; i < permissionsSize; i++) {
+                    String name = pkg.getRequestedPermissions().get(i);
+                    //Slog.d(TAG, "permission name="+name);
+                    /*if (TextUtils.isEmpty(name)
+                        || !"android.permission.XXX".equals(name)) {
+                        continue;
+                    }*/
+                    Slog.d(TAG, pkg.getPackageName() + " grantInstallPermission " + name);
+                    if (null == mSettings || null == mSettings.mPermissions) {
+                        Slog.w(TAG, "mSettings is " + mSettings);
+                        break;
+                    }
+                    BasePermission bp = mSettings.mPermissions.get(name);
+                    if(null != bp && permissionsState.grantInstallPermission(bp) != PermissionsState.PERMISSION_OPERATION_FAILURE) {
+                        changedInstallPermission = true;
+                        Slog.d(TAG, pkg.getPackageName() + " grantInstallPermission " + name + " success");
+                    }
+                }
+            }
+
             if ((changedInstallPermission || replace) && !ps.areInstallPermissionsFixed() &&
                     !ps.isSystem() || ps.getPkgState().isUpdatedSystemApp()) {
                 // This is the first that we have heard about this package, so the
