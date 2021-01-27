@@ -124,20 +124,6 @@ public class EinkMode {
         } catch (RemoteException e) {
             e.rethrowFromSystemServer();
         }
-
-        try {
-            IBinder surfaceFlinger = ServiceManager.getService("SurfaceFlinger");
-            if (surfaceFlinger != null) {
-                Parcel data = Parcel.obtain();
-                data.writeInterfaceToken("android.ui.ISurfaceComposer");
-                surfaceFlinger.transact(1004, data, null, 0);
-                data.recycle();
-                Log.d(TAG, "system set einkMode to EPD_FULL");
-            }
-        } catch (Exception ex)
-        {
-            Log.e(TAG, "failed to transact SF_SETMODE.", ex);
-        }
 }
     public void setMode(@Nullable String einkMode){
         try {
