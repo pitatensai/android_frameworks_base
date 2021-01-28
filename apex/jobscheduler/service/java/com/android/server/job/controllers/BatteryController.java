@@ -37,6 +37,7 @@ import com.android.server.job.JobSchedulerService;
 import com.android.server.job.StateControllerProto;
 
 import java.util.function.Predicate;
+import android.os.SystemProperties;
 
 /**
  * Simple controller that tracks whether the phone is charging or not. The phone is considered to
@@ -208,6 +209,7 @@ public final class BatteryController extends RestrictingController {
                     // charging, but hasn't been for long enough to be healthy.
                     mBatteryHealthy = false;
                     maybeReportNewChargingStateLocked();
+                    SystemProperties.set("sys.power.status", "1");
                 } else if (Intent.ACTION_BATTERY_OKAY.equals(action)) {
                     if (DEBUG) {
                         Slog.d(TAG, "Battery life healthy enough to do work. @ "
@@ -215,6 +217,7 @@ public final class BatteryController extends RestrictingController {
                     }
                     mBatteryHealthy = true;
                     maybeReportNewChargingStateLocked();
+                    SystemProperties.set("sys.power.status", "0");
                 } else if (BatteryManager.ACTION_CHARGING.equals(action)) {
                     if (DEBUG) {
                         Slog.d(TAG, "Received charging intent, fired @ "

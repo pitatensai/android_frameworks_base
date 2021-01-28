@@ -70,6 +70,7 @@ import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.lang.annotation.Retention;
 import java.text.NumberFormat;
+import android.os.SystemProperties;
 
 public class BatteryMeterView extends LinearLayout implements
         BatteryStateChangeCallback, Tunable, DarkReceiver, ConfigurationListener {
@@ -321,6 +322,11 @@ public class BatteryMeterView extends LinearLayout implements
 
     @Override
     public void onBatteryLevelChanged(int level, boolean pluggedIn, boolean charging) {
+        if(pluggedIn){
+            SystemProperties.set("sys.power.connected", "1");
+        }else{
+            SystemProperties.set("sys.power.connected", "0");
+        }
         mDrawable.setCharging(pluggedIn);
         mDrawable.setBatteryLevel(level);
         mCharging = pluggedIn;
