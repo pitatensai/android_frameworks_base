@@ -389,6 +389,7 @@ void enableAutoSuspend() {
     {
         std::lock_guard<std::mutex> lock(gSuspendMutex);
         if (gSuspendBlocker) {
+            //ALOGD("enableAutoSuspend gSuspendBlocker->release()");
             gSuspendBlocker->release();
             gSuspendBlocker.clear();
         }
@@ -399,6 +400,7 @@ void disableAutoSuspend() {
     std::lock_guard<std::mutex> lock(gSuspendMutex);
     if (!gSuspendBlocker) {
         sp<ISystemSuspend> suspendHal = getSuspendHal();
+        //ALOGD("disableAutoSuspend acquireWakeLock PowerManager.SuspendLockout");
         gSuspendBlocker = suspendHal->acquireWakeLock(WakeLockType::PARTIAL,
                 "PowerManager.SuspendLockout");
     }
@@ -416,11 +418,13 @@ static void nativeInit(JNIEnv* env, jobject obj) {
 
 static void nativeAcquireSuspendBlocker(JNIEnv *env, jclass /* clazz */, jstring nameStr) {
     ScopedUtfChars name(env, nameStr);
+    //ALOGD("nativeAcquireSuspendBlocker %s",name.c_str());
     acquire_wake_lock(PARTIAL_WAKE_LOCK, name.c_str());
 }
 
 static void nativeReleaseSuspendBlocker(JNIEnv *env, jclass /* clazz */, jstring nameStr) {
     ScopedUtfChars name(env, nameStr);
+    //ALOGD("nativeReleaseSuspendBlocker %s",name.c_str());
     release_wake_lock(name.c_str());
 }
 
@@ -460,7 +464,9 @@ static void nativeSetAutoSuspend(JNIEnv* /* env */, jclass /* clazz */, jboolean
     if (enable) {
         android::base::Timer t;
         gScreenOn = false;
+        autosuspend_idle(false);
         enableAutoSuspend();
+        //ALOGD("nativeSetAutoSuspend enableAutoSuspend");
         if (t.duration() > 100ms) {
             ALOGD("Excessive delay in autosuspend_enable() while turning screen off");
         }
@@ -468,6 +474,7 @@ static void nativeSetAutoSuspend(JNIEnv* /* env */, jclass /* clazz */, jboolean
         android::base::Timer t;
         gScreenOn = true;
         disableAutoSuspend();
+        //ALOGD("nativeSetAutoSuspend disableAutoSuspend");
         if (t.duration() > 100ms) {
             ALOGD("Excessive delay in autosuspend_disable() while turning screen on");
         }
