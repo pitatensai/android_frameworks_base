@@ -91,7 +91,8 @@ public class WifiSleepController {
             } else if (action.equals(Intent.ACTION_SCREEN_ON)) {
                 mIsScreenON = true;
                 exitSleepState();
-		SystemProperties.set(PERSISTENT_PROPERTY_WIFI_SLEEP_FLAG, "false");
+                SystemProperties.set(PERSISTENT_PROPERTY_WIFI_SLEEP_FLAG, "false");
+                SystemProperties.set(PERSISTENT_PROPERTY_BT_SLEEP_FLAG, "false");
             } else if (action.equals(Intent.ACTION_SCREEN_OFF)) {
                 mIsScreenON = false;
                 log("isScanAlwaysAvailable = " + mWifiManager.isScanAlwaysAvailable());
@@ -103,10 +104,7 @@ public class WifiSleepController {
                 mWifiIsOpened = getWifiIsEnabled();
                 if (shouldStartWifiSleep()) {
                     setWifiSleepAlarm();
-                    if(mBtIsOpened)
-                        SystemProperties.set(PERSISTENT_PROPERTY_BT_SLEEP_FLAG, "true");
                 }else if(shouldStartBtSleep()){//check if only bt
-                    SystemProperties.set(PERSISTENT_PROPERTY_BT_SLEEP_FLAG, "true");
                     setWifiSleepAlarm();
                 }
             } else if (action.contains(ACTION_WIFI_SLEEP_TIMEOUT_ALARM)) {
@@ -115,10 +113,12 @@ public class WifiSleepController {
                 if(!mIsScreenON) {
                     if(mWifiIsOpened) {
                         setWifiEnabled(false);
-			SystemProperties.set(PERSISTENT_PROPERTY_WIFI_SLEEP_FLAG, "true");
-		    }
-                    if(mBtIsOpened && mBtPowerDownSetting)
+                        SystemProperties.set(PERSISTENT_PROPERTY_WIFI_SLEEP_FLAG, "true");
+                    }
+                    if(mBtIsOpened && mBtPowerDownSetting){
                         setBtEnabled(false);
+                        SystemProperties.set(PERSISTENT_PROPERTY_BT_SLEEP_FLAG, "true");;
+                    }
                 }
             } else if (action.equals(Intent.ACTION_BOOT_COMPLETED)) {
                 boolean mWifiSleepFlag = SystemProperties.getBoolean(PERSISTENT_PROPERTY_WIFI_SLEEP_FLAG, false);
@@ -209,7 +209,6 @@ public class WifiSleepController {
             }
             if(mBtIsOpened && !getBtIsEnabled()){
                 setBtEnabled(true);
-                SystemProperties.set(PERSISTENT_PROPERTY_BT_SLEEP_FLAG, "false");
             }
             removeWifiSleepAlarm();
         }
