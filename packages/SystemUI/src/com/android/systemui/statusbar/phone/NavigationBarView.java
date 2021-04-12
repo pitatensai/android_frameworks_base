@@ -127,6 +127,7 @@ public class NavigationBarView extends FrameLayout implements
     private KeyButtonDrawable mVolumeSubIcon;
     private KeyButtonDrawable mScreenshotIcon;
     private KeyButtonDrawable mSwitchModeIcon;
+    private KeyButtonDrawable mEinkMenuIcon;
 
     private EdgeBackGestureHandler mEdgeBackGestureHandler;
     private final DeadZone mDeadZone;
@@ -338,6 +339,7 @@ public class NavigationBarView extends FrameLayout implements
         mButtonDispatchers.put(R.id.volume_add, new ButtonDispatcher(R.id.volume_add));
         mButtonDispatchers.put(R.id.refresh, new ButtonDispatcher(R.id.refresh));
         mButtonDispatchers.put(R.id.switch_mode, new ButtonDispatcher(R.id.switch_mode));
+        mButtonDispatchers.put(R.id.eink_menu, new ButtonDispatcher(R.id.eink_menu));
         mButtonDispatchers.put(R.id.volume_sub, new ButtonDispatcher(R.id.volume_sub));
         mDeadZone = new DeadZone(this);
 
@@ -498,7 +500,11 @@ public class NavigationBarView extends FrameLayout implements
     public ButtonDispatcher getSwitchModeButton() {
         return mButtonDispatchers.get(R.id.switch_mode);
     }
-
+    
+    public ButtonDispatcher getEinkMenuButton() {
+        return mButtonDispatchers.get(R.id.eink_menu);
+    }
+    
     public ButtonDispatcher getVolumeSubButton() {
         return mButtonDispatchers.get(R.id.volume_sub);
     }
@@ -549,6 +555,7 @@ public class NavigationBarView extends FrameLayout implements
         }
         mRefreshIcon = getDrawable(R.drawable.ic_sysbar_refresh_button);
         mSwitchModeIcon = getDrawable(R.drawable.ic_sysbar_switch_mode_button);
+        mEinkMenuIcon = getDrawable(R.drawable.ic_sysbar_eink_menu_button);
         mVolumeAddIcon = getDrawable(R.drawable.ic_sysbar_volume_add_button);
         mVolumeSubIcon = getDrawable(R.drawable.ic_sysbar_volume_sub_button);
         mScreenshotIcon = getDrawable(R.drawable.ic_sysbar_capture_button);
@@ -707,6 +714,7 @@ public class NavigationBarView extends FrameLayout implements
         getBackButton().setImageDrawable(backIcon);
         getRefreshButton().setImageDrawable(mRefreshIcon);
         getSwitchModeButton().setImageDrawable(mSwitchModeIcon);
+        getEinkMenuButton().setImageDrawable(mEinkMenuIcon);
         getVolumeAddButton().setImageDrawable(mVolumeAddIcon);
         getVolumeSubButton().setImageDrawable(mVolumeSubIcon);
         getScreenshotButton().setImageDrawable(mScreenshotIcon);

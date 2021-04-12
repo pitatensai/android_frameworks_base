@@ -134,6 +134,7 @@ import android.util.ArraySet;
 import android.util.DisplayMetrics;
 import android.util.IntArray;
 import android.util.Pair;
+import android.util.Log;
 import android.util.Slog;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
@@ -169,6 +170,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.os.SystemProperties;
 
 /** Root {@link WindowContainer} for the device. */
 class RootWindowContainer extends WindowContainer<DisplayContent>
@@ -3321,6 +3325,47 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
                 }
                 return false;
             }
+        }
+        final ActivityStack mainStack = getTopDisplayFocusedStack();
+        ActivityRecord r = mainStack.topRunningActivityLocked();
+        Uri URI_EINK_SETTINGS_UPDATE = Uri.parse("content://com.android.systemui.eink/einksettingsupdate");
+        Uri URI_EINK_SETTINGS = Uri.parse("content://com.android.systemui.eink/einksettings");
+        String boot_completed = SystemProperties.get("sys.boot_completed");
+        if(boot_completed.equals("1")) {
+            new Thread(){
+                @Override
+                public void run() {
+                    Cursor cursor = null;
+                    int DPI = 320;
+                    int contrast = 0;
+                    int refreshFrequency = 20;
+                    String refreshMode = "7";
+                    int isRefreshSetting = 0;
+                    try {
+                        cursor = mService.mContext.getContentResolver().query(URI_EINK_SETTINGS_UPDATE,
+                            null, "package_name = ?", new String[]{r.packageName}, null);
+                    } catch (Exception e) {
+                        Log.v(TAG, "EINK++ Exception: " + e.getMessage());
+                        cursor = null;
+                    }
+                    if(null != cursor) {
+                        if(cursor.getCount() > 0) {
+                            if(cursor.moveToFirst()) {
+                                DPI = cursor.getInt(cursor.getColumnIndex("app_dpi"));
+                            }
+                        } else {
+                            ContentValues values = new ContentValues();
+                            values.put("app_dpi", DPI);
+                            values.put("app_contrast", contrast);
+                            values.put("package_name", r.packageName);
+                            values.put("refresh_mode", refreshMode);
+                            values.put("refresh_frequency", refreshFrequency);
+                            values.put("is_refresh_setting", isRefreshSetting);
+                            mService.mContext.getContentResolver().insert(URI_EINK_SETTINGS, values);
+                        }
+                    }
+                }
+            }.start();
         }
         // Send launch end powerhint when idle
         sendPowerHintForLaunchEndIfNeeded();
