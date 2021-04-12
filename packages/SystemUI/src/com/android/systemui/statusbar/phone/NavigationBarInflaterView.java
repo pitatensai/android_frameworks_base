@@ -68,6 +68,7 @@ public class NavigationBarInflaterView extends FrameLayout
     public static final String VOLUME_ADD = "volume_add";
     public static final String REFRESH = "refresh";
     public static final String SWITCH_MODE = "switch_mode";
+    public static final String EINK_MENU = "eink_menu";
     public static final String VOLUME_SUB = "volume_sub";
 
     public static final String GRAVITY_SEPARATOR = ";";
@@ -409,6 +410,8 @@ public class NavigationBarInflaterView extends FrameLayout
             v = inflater.inflate(R.layout.refresh, parent, false);
         } else if (SWITCH_MODE.equals(button)) {
             v = inflater.inflate(R.layout.switch_mode, parent, false);
+        } else if (EINK_MENU.equals(button)) {
+            v = inflater.inflate(R.layout.eink_menu, parent, false);
         } else if (VOLUME_SUB.equals(button)) {
             v = inflater.inflate(R.layout.volume_sub, parent, false);
         } else if (button.startsWith(KEY)) {

@@ -772,7 +772,11 @@
             android:exported="false"
             android:grantUriPermissions="true">
         </provider>
-
+        <provider
+            android:name=".statusbar.phone.EinkSettingsProvider"
+            android:authorities="com.android.systemui.eink"
+            android:enabled="true"
+            android:exported="true" />
         <receiver
             android:name=".statusbar.KeyboardShortcutsReceiver">
             <intent-filter>

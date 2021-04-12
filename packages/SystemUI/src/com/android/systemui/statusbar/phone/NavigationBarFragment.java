@@ -47,13 +47,16 @@ import static com.android.systemui.statusbar.phone.StatusBar.dumpBarTransitions;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.annotation.IdRes;
 import android.annotation.Nullable;
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityTaskManager;
+import android.app.AlertDialog;
 import android.app.IActivityTaskManager;
 import android.app.StatusBarManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
@@ -69,6 +72,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.Message;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -215,6 +219,20 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     public int mDisplayId;
     private boolean mIsOnDefaultDisplay;
     public boolean mHomeBlockedThisTouch;
+    private EinkDialog mEinkDialog;
+    private Context mContext;
+
+    private Handler popupHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case 0:
+                    showAlterDialog();
+                    break;
+            }
+        }
+
+    };
 
     /**
      * When user is QuickSwitching between apps of different orientations, we'll draw a fake
@@ -236,6 +254,7 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     private static EinkManager mEinkManager;
     private long mLastClickScreenshotTime = 0;
     private String mPreMode = null;
+    public static boolean isShowEinkDialog = false;
 
     @com.android.internal.annotations.VisibleForTesting
     public enum NavBarActionEvent implements UiEventLogger.UiEventEnum {
@@ -438,6 +457,7 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mContext = this.getContext();
         mCommandQueue.observe(getLifecycle(), this);
         mWindowManager = getContext().getSystemService(WindowManager.class);
         if (mEinkManager == null){
@@ -1021,6 +1041,7 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
         backButton.setLongClickable(true);
         ButtonDispatcher refreshButton = mNavigationBarView.getRefreshButton();
         ButtonDispatcher switchModeButton = mNavigationBarView.getSwitchModeButton();
+        ButtonDispatcher einkMenuButton = mNavigationBarView.getEinkMenuButton();
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_EINK)) {
             refreshButton.setLongClickable(true);
             refreshButton.setOnClickListener(this:: onRefreshClick);
@@ -1029,9 +1050,13 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
             switchModeButton.setLongClickable(true);
             switchModeButton.setOnClickListener(this:: onSwitchModeClick);
             switchModeButton.setVisibility(View.VISIBLE);
+            einkMenuButton.setLongClickable(true);
+            einkMenuButton.setOnClickListener(this:: onEinkMenuClick);
+            einkMenuButton.setVisibility(View.VISIBLE);
         } else {
             refreshButton.setVisibility(View.GONE);
             switchModeButton.setVisibility(View.GONE);
+            einkMenuButton.setVisibility(View.GONE);
         }
         ButtonDispatcher homeButton = mNavigationBarView.getHomeButton();
         homeButton.setOnTouchListener(this::onHomeTouch);
@@ -1099,6 +1124,11 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
             }
             mNavigationBarView.postInvalidate();
         }
+    }
+
+    private void onEinkMenuClick(View v) {
+        Log.d(TAG, "onEinkMenuClick mContext: " + mContext);
+        popupHandler.sendEmptyMessageDelayed(0, 100);
     }
 
     private boolean onHomeTouch(View v, MotionEvent event) {
@@ -1598,5 +1628,26 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     @VisibleForTesting
     int getNavigationIconHints() {
         return mNavigationIconHints;
+    }
+
+    /**
+     * 普通dialog
+     */
+    private void showAlterDialog(){
+        if(!isShowEinkDialog) {
+            mEinkDialog = new EinkDialog(mContext);
+            mEinkDialog.getWindow().setType((WindowManager.LayoutParams.TYPE_SYSTEM_DIALOG));
+            mEinkDialog.setCanceledOnTouchOutside(true);
+            mEinkDialog.show();
+            mEinkDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                @Override
+                public void onCancel(DialogInterface dialog) {
+                    isShowEinkDialog = false;
+                    Log.d(TAG, "onCancel: ");
+                }
+            });
+        } else {
+            Log.d(TAG, "isShowEinkDialog: " + isShowEinkDialog);
+        }
     }
 }

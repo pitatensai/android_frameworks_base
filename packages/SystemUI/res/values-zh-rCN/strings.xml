@@ -1100,4 +1100,15 @@
     <string name="media_output_dialog_pairing_new" msgid="9099497976087485862">"与新设备配对"</string>
     <string name="battery_state_unknown_notification_title" msgid="8464703640483773454">"读取电池计量器时出现问题"</string>
     <string name="battery_state_unknown_notification_text" msgid="13720937839460899">"点按即可了解详情"</string>
+    <string name="eink_app_optimize">应用优化</string>
+    <string name="eink_dpi_setting">DPI设置</string>
+    <string name="eink_animation_setting">动画设置</string>
+    <string name="eink_contrast_setting">对比度设置</string>
+    <string name="eink_refresh_setting">刷新设置</string>
+    <string name="eink_refresh_mode">刷新模式</string>
+    <string name="eink_common_mode">普通模式</string>
+    <string name="eink_auto_mode">auto模式</string>
+    <string name="eink_a2_mode">A2模式</string>
+    <string name="eink_refresh_frequency">全刷频率</string>
+    <string name="eink_app_bleach">应用漂白</string>
 </resources>
