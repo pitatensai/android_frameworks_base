@@ -53,12 +53,13 @@
 
     <RelativeLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="1dp"
         android:id="@+id/eink_dialog_animation_layout"
         android:layout_below="@+id/eink_dialog_dpi_layout"
         android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp"
-        android:layout_marginTop="20dp">
+        android:layout_marginTop="0dp"
+        android:visibility="invisible">
         <TextView
             android:background="#ffffff"
             android:id="@+id/eink_dialog_animation_text"

@@ -58,6 +58,7 @@ import android.graphics.Bitmap;
 import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Insets;
 import android.graphics.Interpolator;
 import android.graphics.LinearGradient;
@@ -90,6 +91,7 @@ import android.os.Parcelable;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.Trace;
+import android.provider.Settings;
 import android.sysprop.DisplayProperties;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -140,6 +142,7 @@ import android.view.inspector.InspectableProperty.EnumEntry;
 import android.view.inspector.InspectableProperty.FlagEntry;
 import android.widget.Checkable;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.ScrollBarDrawable;
 
 import com.android.internal.R;
@@ -5288,6 +5291,28 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
     private int mExplicitStyle;
 
     /**
+     * {@hide}
+     */
+    protected boolean mIsAppBleach;//是否启用应用漂白
+    /**
+     * {@hide}
+     */
+    protected int mAppBleachIconColor;//图标颜色
+    /**
+     * {@hide}
+     */
+    protected int mAppBleachCoverColor;//封面颜色
+    /**
+     * {@hide}
+     */
+    protected int mAppBleachBgColor;//背景颜色
+
+    private boolean mIsAppBleachTemp;
+    private int mAppBleachIconColorTemp;
+    private int mAppBleachCoverColorTemp;
+    private int mAppBleachBgColorTemp;
+
+    /**
      * Specifies which input source classes should provide unbuffered input events to this view
      *
      * @see View#requestUnbufferedDispatch(int)
@@ -5386,6 +5411,88 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             sForceLayoutWhenInsetsChanged = targetSdkVersion < Build.VERSION_CODES.R;
 
             sCompatibilityDone = true;
+        }
+    }
+
+    /**
+     * {@hide}
+     */
+    protected void updateValue() {
+        final String value = Settings.System.getString(mContext.getContentResolver(),
+            "app_bleach_filter");
+        if (null != value && value.split(",").length >= 4) {
+            String[] values = value.split(",");
+            mIsAppBleach = "1".equals(values[0]);
+            mAppBleachIconColor = Integer.parseInt(values[1]);
+            mAppBleachCoverColor = Integer.parseInt(values[2]);
+            mAppBleachBgColor = Integer.parseInt(values[3]);
+        } else {
+            mIsAppBleach = false;
+            mAppBleachIconColor = 0;
+            mAppBleachCoverColor = 0;
+            mAppBleachBgColor = 0;
+        }
+    }
+
+    private void needRefreshCurrentView() {
+        try {
+            updateValue();
+            if (mIsAppBleach != mIsAppBleachTemp
+                || mAppBleachIconColor != mAppBleachIconColorTemp
+                || mAppBleachCoverColor != mAppBleachCoverColorTemp
+                || mAppBleachBgColor != mAppBleachBgColorTemp) {
+                mIsAppBleachTemp = mIsAppBleach;
+                mAppBleachIconColorTemp = mAppBleachIconColor;
+                mAppBleachCoverColorTemp = mAppBleachCoverColor;
+                mAppBleachBgColorTemp = mAppBleachBgColor;
+                refreshCurrentView();
+                //invalidate(true);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * {@hide}
+     */
+    public void refreshCurrentView() {
+        if (null == mContext
+            || "com.android.systemui".equals(mContext.getBasePackageName())
+            /*|| "com.android.launcher3".equals(mContext.getBasePackageName())*/) {
+            return;
+        }
+        updateValue();
+
+        if (this instanceof ImageView) {
+            if (mIsAppBleach) {
+                ColorMatrixColorFilter filter = new ColorMatrixColorFilter(new float[] {
+                    1, 0, 0, 0, mAppBleachIconColor,
+                    0, 1, 0, 0, mAppBleachIconColor,
+                    0, 0, 1, 0, mAppBleachIconColor,
+                    0, 0, 0, 1, 0,
+                });
+                ((ImageView)this).setColorFilter(filter);
+            } else {
+                ((ImageView)this).setColorFilter(null);
+            }
+            invalidate(true);
+        } else if (this instanceof ViewGroup) {
+            if (null == mBackground || ((ViewGroup)this).getChildCount() < 1) {
+                return;
+            }
+            if (mIsAppBleach) {
+                ColorMatrixColorFilter filter = new ColorMatrixColorFilter(new float[] {
+                    1, 0, 0, 0, mAppBleachBgColor,
+                    0, 1, 0, 0, mAppBleachBgColor,
+                    0, 0, 1, 0, mAppBleachBgColor,
+                    0, 0, 0, 1, 0,
+                });
+                mBackground.setColorFilter(filter);
+            } else {
+                mBackground.setColorFilter(null);
+            }
+            invalidate(true);
         }
     }
 
@@ -21169,6 +21276,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
     @UnsupportedAppUsage
     public RenderNode updateDisplayListIfDirty() {
         final RenderNode renderNode = mRenderNode;
+        needRefreshCurrentView();
         if (!canHaveDisplayList()) {
             // can't populate RenderNode, don't try
             return renderNode;

@@ -1111,4 +1111,8 @@
     <string name="eink_a2_mode">A2模式</string>
     <string name="eink_refresh_frequency">全刷频率</string>
     <string name="eink_app_bleach">应用漂白</string>
+    <string name="eink_app_bleach_text_plus">"文字增强"</string>
+    <string name="eink_app_bleach_icon_color">"图标颜色"</string>
+    <string name="eink_app_bleach_cover_color">"封面颜色"</string>
+    <string name="eink_app_bleach_bg_color">"背景颜色"</string>
 </resources>

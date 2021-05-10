@@ -8,9 +8,11 @@ import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -33,6 +35,8 @@ public class EinkDialog extends Dialog implements View.OnClickListener, SeekBar.
     private SeekBar mDpiSeekbar, mAnimationSeekbar, mContrastSeekbar;
     private TextView mDpiText, mAnimationText, mContrastText;
     private CheckBox mRefreshCheckbox;
+    private CheckBox mAppBleachCheckbox;
+    private Button mAppBleachSetButton;
     private static final int SET_DPI_TEXT = 0;
     private static final int SET_DPI_SEEKBAR = 1;
     private static final int SET_IS_REFRESH_SETTING = 2;
@@ -40,6 +44,7 @@ public class EinkDialog extends Dialog implements View.OnClickListener, SeekBar.
     private static final int SET_CONTRAST_SEEKBAR = 4;
     private EinkRefreshDialog mEinkRefreshDialog;
     private EinkSettingsManager mEinkSettingsManager;
+    private EinkAppBleachDialog mEinkAppBleachDialog;
 
     public Handler EinkDialogHandler=new Handler() {
         @Override
@@ -106,6 +111,13 @@ public class EinkDialog extends Dialog implements View.OnClickListener, SeekBar.
         mContrastSeekbar.setOnSeekBarChangeListener(this);
         mRefreshButton.setOnClickListener(this);
         mRefreshCheckbox.setOnCheckedChangeListener(this);
+        //应用漂白
+        mAppBleachCheckbox = (CheckBox) findViewById(R.id.eink_dialog_bleach_checkbox);
+        mAppBleachCheckbox.setChecked(EinkSettingsProvider.mIsAppBleach);
+        mAppBleachCheckbox.setOnCheckedChangeListener(this);
+        mAppBleachSetButton = (Button) findViewById(R.id.eink_dialog_bleach_button);
+        mAppBleachSetButton.setOnClickListener(this);
+        mAppBleachSetButton.setEnabled(mAppBleachCheckbox.isChecked());
     }
 
     @Override
@@ -118,6 +130,13 @@ public class EinkDialog extends Dialog implements View.OnClickListener, SeekBar.
                 mEinkRefreshDialog.getWindow().setType((WindowManager.LayoutParams.TYPE_SYSTEM_DIALOG));
                 mEinkRefreshDialog.setCanceledOnTouchOutside(true);
                 mEinkRefreshDialog.show();
+            }
+        } else if (id == R.id.eink_dialog_bleach_button) {
+            if (EinkSettingsProvider.mIsAppBleach) {
+                mEinkAppBleachDialog = new EinkAppBleachDialog(mContext);
+                mEinkAppBleachDialog.getWindow().setType((WindowManager.LayoutParams.TYPE_SYSTEM_DIALOG));
+                mEinkAppBleachDialog.setCanceledOnTouchOutside(true);
+                mEinkAppBleachDialog.show();
             }
         }
     }
@@ -238,6 +257,35 @@ public class EinkDialog extends Dialog implements View.OnClickListener, SeekBar.
                 //设置默认全刷频率
                 mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_REFRESH_FREQUENCY, "" + EinkSettingsProvider.INIT_PROGRASS_REFRESH_FREQUENCY);
             }
+        } else if (id == R.id.eink_dialog_bleach_checkbox) {
+            EinkSettingsProvider.mIsAppBleach = isChecked;
+            ContentValues values = new ContentValues();
+            values.put(EinkSettingsDataBaseHelper.APP_BLEACH_MODE,
+                    EinkSettingsProvider.mIsAppBleach?1:0);
+            int result = mContext.getContentResolver().update(
+                    EinkSettingsProvider.URI_EINK_SETTINGS,
+                    values, EinkSettingsDataBaseHelper.PACKAGE_NAME + " = ?",
+                    new String[]{ EinkSettingsProvider.packageName });
+            Log.d(TAG, EinkSettingsProvider.packageName + " updated " + values
+                + ", result=" + result);
+            if (EinkSettingsProvider.mIsAppBleach && EinkSettingsProvider.mIsAppBleachTextPlus) {
+                Settings.Secure.putInt(mContext.getContentResolver(),
+                        Settings.Secure.ACCESSIBILITY_HIGH_TEXT_CONTRAST_ENABLED, 1);
+            } else {
+                Settings.Secure.putInt(mContext.getContentResolver(),
+                        Settings.Secure.ACCESSIBILITY_HIGH_TEXT_CONTRAST_ENABLED, 0);
+            }
+            EinkSettingsManager.updateAppBleach(mContext);
+            mAppBleachSetButton.setEnabled(isChecked);
         }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        cancel();
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 }

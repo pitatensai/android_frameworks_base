@@ -1,9 +1,11 @@
 package com.android.systemui.statusbar.phone;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.RemoteException;
 import android.os.UserHandle;
+import android.provider.Settings;
 import android.util.Log;
 import android.os.EinkManager;
 import android.view.IWindowManager;
@@ -139,5 +141,19 @@ public class EinkSettingsManager {
         }
         Log.d(TAG, "strContrast: " + strContrast);
         return strContrast;
+    }
+
+    public static void updateAppBleach(Context context) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(EinkSettingsProvider.mIsAppBleach?1:0);
+        sb.append(",");
+        sb.append(EinkSettingsProvider.mAppBleachIconColor);
+        sb.append(",");
+        sb.append(EinkSettingsProvider.mAppBleachCoverColor);
+        sb.append(",");
+        sb.append(EinkSettingsProvider.mAppBleachBgColor);
+        Settings.System.putString(context.getContentResolver(),
+                "app_bleach_filter", sb.toString());
+        context.sendBroadcast(new Intent("com.rockchip.eink.appcustom"));
     }
 }
