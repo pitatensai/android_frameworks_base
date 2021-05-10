@@ -53,6 +53,7 @@ import android.os.SystemProperties;
 import android.app.admin.DevicePolicyManager;
 import android.app.assist.AssistContent;
 import android.compat.annotation.UnsupportedAppUsage;
+import android.content.BroadcastReceiver;
 import android.content.ComponentCallbacks2;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -60,6 +61,7 @@ import android.content.Context;
 import android.content.CursorLoader;
 import android.content.IIntentSender;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.LocusId;
 import android.content.SharedPreferences;
@@ -965,6 +967,15 @@ public class Activity extends ContextThemeWrapper
 
     private boolean mIsInMultiWindowMode;
     private boolean mIsInPictureInPictureMode;
+
+    private MyAppCustomConfigChangeReceiver mAppCustomConfigChangeReceiver = new MyAppCustomConfigChangeReceiver();
+    private class MyAppCustomConfigChangeReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Slog.v(TAG, "onReceive onAppBleachConfigChanged ");
+            refreshCurrentView();
+        }
+    }
 
     private final WindowControllerCallback mWindowControllerCallback =
             new WindowControllerCallback() {
@@ -1938,6 +1949,40 @@ public class Activity extends ContextThemeWrapper
         notifyContentCaptureManagerIfNeeded(CONTENT_CAPTURE_RESUME);
 
         mCalled = true;
+
+        IntentFilter appCustomConfigFilter = new IntentFilter();
+        appCustomConfigFilter.addAction("com.rockchip.eink.appcustom");
+        registerReceiver(mAppCustomConfigChangeReceiver, appCustomConfigFilter);
+    }
+
+    /**
+     * @hide
+     */
+    public void refreshCurrentView() {
+        try {
+            Window window = getWindow();
+            if (null != window) {
+                refreshCurrentView(window.getDecorView());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void refreshCurrentView(View view) {
+        if (null == view) {
+            return;
+        }
+        if (view instanceof ViewGroup) {
+            int count = ((ViewGroup) view).getChildCount();
+            for (int i = 0; i < count; i++) {
+                View childView = ((ViewGroup) view).getChildAt(i);
+                view.refreshCurrentView();
+                refreshCurrentView(childView);
+            }
+        } else {
+            view.refreshCurrentView();
+        }
     }
 
     /**
@@ -2375,6 +2420,7 @@ public class Activity extends ContextThemeWrapper
 
         notifyContentCaptureManagerIfNeeded(CONTENT_CAPTURE_PAUSE);
         mCalled = true;
+        unregisterReceiver(mAppCustomConfigChangeReceiver);
     }
 
     /**

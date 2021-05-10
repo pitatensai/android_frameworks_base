@@ -2895,4 +2895,8 @@
     <string name="eink_a2_mode">A2 Mode</string>
     <string name="eink_refresh_frequency">Refresh Frequency</string>
     <string name="eink_app_bleach">App Bleach</string>
+    <string name="eink_app_bleach_text_plus">Text Plus</string>
+    <string name="eink_app_bleach_icon_color">Icons Color</string>
+    <string name="eink_app_bleach_cover_color">Cover Color</string>
+    <string name="eink_app_bleach_bg_color">BG Color</string>
 </resources>

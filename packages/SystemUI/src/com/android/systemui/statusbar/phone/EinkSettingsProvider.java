@@ -1,6 +1,7 @@
 package com.android.systemui.statusbar.phone;
 
 import android.content.ContentProvider;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -11,6 +12,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.RemoteException;
 import android.os.UserHandle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.IWindowManager;
 import android.view.WindowManagerGlobal;
@@ -39,6 +41,12 @@ public class EinkSettingsProvider extends ContentProvider {
     public static String strContrast = "0xfedcba987643210";
     public static String refreshMode = "7";
     public static int isRefreshSetting = 0;
+    public static int mAppAnimFilter;//动画过滤
+    public static boolean mIsAppBleach;//是否启用应用漂白
+    public static boolean mIsAppBleachTextPlus;//字体增强
+    public static int mAppBleachIconColor;//图标颜色
+    public static int mAppBleachCoverColor;//封面颜色
+    public static int mAppBleachBgColor;//背景颜色
 
     private static UriMatcher mUriMatcher;
     private EinkSettingsDataBaseHelper mEinkSettingsDataBaseHelper;
@@ -112,6 +120,20 @@ public class EinkSettingsProvider extends ContentProvider {
                             //设置默认全刷频率
                             mEinkSettingsManager.setProperty(EINK_REFRESH_FREQUENCY, "" + refreshFrequency);
                         }
+                        //动画过滤
+                        mAppAnimFilter = cursor.getInt(cursor.getColumnIndex(
+                                EinkSettingsDataBaseHelper.APP_ANIM_FILTER));
+                        //应用漂白
+                        mIsAppBleach = 1 == cursor.getInt(cursor.getColumnIndex(
+                                EinkSettingsDataBaseHelper.APP_BLEACH_MODE));
+                        mIsAppBleachTextPlus = 1 == cursor.getInt(cursor.getColumnIndex(
+                                EinkSettingsDataBaseHelper.APP_BLEACH_TEXT_PLUS));
+                        mAppBleachIconColor = cursor.getInt(cursor.getColumnIndex(
+                                EinkSettingsDataBaseHelper.APP_BLEACH_ICON_COLOR));
+                        mAppBleachCoverColor = cursor.getInt(cursor.getColumnIndex(
+                                EinkSettingsDataBaseHelper.APP_BLEACH_COVER_COLOR));
+                        mAppBleachBgColor = cursor.getInt(cursor.getColumnIndex(
+                                EinkSettingsDataBaseHelper.APP_BLEACH_BG_COLOR));
                     }
                 } else {
                     //设置默认DPI
@@ -123,7 +145,22 @@ public class EinkSettingsProvider extends ContentProvider {
                     mEinkSettingsManager.setEinkMode(EinkManager.EinkMode.EPD_PART_GC16);
                     //设置默认全刷频率
                     mEinkSettingsManager.setProperty(EINK_REFRESH_FREQUENCY, "" + INIT_PROGRASS_REFRESH_FREQUENCY);
+                    mAppAnimFilter = 0;
+                    mIsAppBleach = false;
+                    mIsAppBleachTextPlus = false;
+                    mAppBleachIconColor = 0;
+                    mAppBleachCoverColor = 0;
+                    mAppBleachBgColor = 0;
                 }
+                ContentResolver contentResolver = getContext().getContentResolver();
+                if (mIsAppBleach && mIsAppBleachTextPlus) {
+                    Settings.Secure.putInt(contentResolver,
+                            Settings.Secure.ACCESSIBILITY_HIGH_TEXT_CONTRAST_ENABLED, 1);
+                } else {
+                    Settings.Secure.putInt(contentResolver,
+                            Settings.Secure.ACCESSIBILITY_HIGH_TEXT_CONTRAST_ENABLED, 0);
+                }
+                EinkSettingsManager.updateAppBleach(getContext());
                 break;
         }
         Log.d(TAG, "systemui query done");
