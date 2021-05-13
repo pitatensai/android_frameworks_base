@@ -978,7 +978,11 @@ public final class PowerManagerService extends SystemService
         mIdleWakeAlarmHelper.cancel();
         if (reset && mUserBootComplete && !mMusicPlaying) {
             nativeWake();
-            mHandler.postDelayed(mIdleTimer, mIdleDelay);
+            int newIdleDelay = SystemProperties.getInt("persist.sys.idle-delay", 10000);
+            if (newIdleDelay != mIdleDelay)
+                mIdleDelay = newIdleDelay;
+            if (mIdleDelay > 0)
+                mHandler.postDelayed(mIdleTimer, mIdleDelay);
         }
     }
 
