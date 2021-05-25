@@ -1795,7 +1795,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
                 calculateDisplayCutoutForRotation(mDisplayInfo.rotation));
 
         // Not much of use to rotate the display for apps since it's close to square.
-        mIgnoreRotationForApps = isNonDecorDisplayCloseToSquare(Surface.ROTATION_0, width, height);
+        mIgnoreRotationForApps = false;//isNonDecorDisplayCloseToSquare(Surface.ROTATION_0, width, height);
     }
 
     /** @return {@code true} if the orientation requested from application will be ignored. */
