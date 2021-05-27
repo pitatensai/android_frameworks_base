@@ -25,7 +25,7 @@ public class EinkSettingsProvider extends ContentProvider {
     public static final int EINKSETTINGS_UPDATE = 1;
     public static final int INIT_PROGRASS_DPI = 320;
     public static final int INIT_PROGRASS_REFRESH_FREQUENCY = 20;
-    public static final String INIT_PROGRASS_CONTRAST = "0xfedcba987643210";
+    public static final String INIT_PROGRASS_CONTRAST = "0xfedcba9876543210";
     private static final String COMMON_REFRESH_MODE = "7";
     private static final String AUTO_REFRESH_MODE = "0";
     private static final String A2_REFRESH_MODE = "12";
@@ -38,7 +38,7 @@ public class EinkSettingsProvider extends ContentProvider {
     public static int DPI = 320;
     public static int refreshFrequency = 20;
     public static int contrast = 0;
-    public static String strContrast = "0xfedcba987643210";
+    public static String strContrast = "0xfedcba9876543210";
     public static String refreshMode = "7";
     public static int isRefreshSetting = 0;
     public static int mAppAnimFilter;//动画过滤
