@@ -91,23 +91,23 @@ public class EinkSettingsManager {
             mBlackCount = 11;
         }
         int whiteIndex = 16 - mWhiteCount;
-        int remainderLevel = contrastLevel % 10;
+        int remainder = 16 - mWhiteCount - mBlackCount;
+        int remainderLevel = 14 / (remainder + 1);
         for(int i = 0, j = 1; i < 16; i++) {
             if(i < mBlackCount) {
                 contrast[i] = 0;
             }else if(i >= whiteIndex) {
                 contrast[i] = 15;
             }else {
-               if(remainderLevel == 0) {
-                   contrast[i] = i;
-               }else if(i > remainderLevel) {
-                   contrast[i] = i - remainderLevel;
-               }else if(i <= remainderLevel) {
-                   contrast[i] = j;
-                   j++;
-               }
+                contrast[i] = j * remainderLevel;
+                j++;
             }
         }
+        //only one step X: 0xfffffX0000000000, fine adjust
+        if (contrastLevel >= 70 && contrastLevel < 77)
+            contrast[mBlackCount] = remainderLevel - (contrastLevel % remainderLevel);
+        else if (contrastLevel >= 77)
+            contrast[mBlackCount] = 0;
         return contrast;
     }
 
