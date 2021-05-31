@@ -17,7 +17,7 @@ import android.os.EinkManager;
 
 import com.android.systemui.R;
 
-public class EinkRefreshDialog extends Dialog implements View.OnClickListener, SeekBar.OnSeekBarChangeListener{
+public class EinkRefreshDialog extends EinkBaseDialog implements View.OnClickListener, SeekBar.OnSeekBarChangeListener{
     private static final String TAG = "EinkRefreshDialog";
     private Context mContext;
     private Button mCommonButton,mAutoButton,mA2Button;
@@ -61,8 +61,8 @@ public class EinkRefreshDialog extends Dialog implements View.OnClickListener, S
         }
     };
 
-    public EinkRefreshDialog(Context context) {
-        super(context);
+    public EinkRefreshDialog(Context context, Dialog parent) {
+        super(context, parent);
         mContext = context;
     }
 

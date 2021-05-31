@@ -1,10 +1,8 @@
 package com.android.systemui.statusbar.phone;
 
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
-import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -12,15 +10,14 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.os.EinkManager;
+
 import com.android.systemui.R;
 
 /**
@@ -28,7 +25,7 @@ import com.android.systemui.R;
  * Created by admin on 2017/8/30.
  */
 
-public class EinkDialog extends Dialog implements View.OnClickListener, SeekBar.OnSeekBarChangeListener, CompoundButton.OnCheckedChangeListener {
+public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, SeekBar.OnSeekBarChangeListener, CompoundButton.OnCheckedChangeListener {
     private static final String TAG = "EinkDialog";
     private Context mContext;
     private Button mRefreshButton;
@@ -73,7 +70,7 @@ public class EinkDialog extends Dialog implements View.OnClickListener, SeekBar.
     };
 
     public EinkDialog(Context context) {
-        super(context);
+        super(context, null);
         mContext = context;
     }
 
@@ -124,18 +121,17 @@ public class EinkDialog extends Dialog implements View.OnClickListener, SeekBar.
     public void onClick(View v) {
         int id = v.getId();
         Log.d(TAG, "EinkSettingsProvider.isRefreshSetting: " + EinkSettingsProvider.isRefreshSetting);
-        if(id == R.id.eink_dialog_refresh_button) {
-            if(EinkSettingsProvider.isRefreshSetting == 1) {
-                mEinkRefreshDialog = new EinkRefreshDialog(mContext);
-                mEinkRefreshDialog.getWindow().setType((WindowManager.LayoutParams.TYPE_SYSTEM_DIALOG));
-                mEinkRefreshDialog.setCanceledOnTouchOutside(true);
+        if (id == R.id.eink_dialog_refresh_button) {
+            if (EinkSettingsProvider.isRefreshSetting == 1) {
+                mEinkRefreshDialog = new EinkRefreshDialog(mContext, this);
                 mEinkRefreshDialog.show();
             }
         } else if (id == R.id.eink_dialog_bleach_button) {
             if (EinkSettingsProvider.mIsAppBleach) {
-                mEinkAppBleachDialog = new EinkAppBleachDialog(mContext);
-                mEinkAppBleachDialog.getWindow().setType((WindowManager.LayoutParams.TYPE_SYSTEM_DIALOG));
-                mEinkAppBleachDialog.setCanceledOnTouchOutside(true);
+                if (null != mEinkAppBleachDialog && mEinkAppBleachDialog.isShowing()) {
+                    return;
+                }
+                mEinkAppBleachDialog = new EinkAppBleachDialog(mContext, this);
                 mEinkAppBleachDialog.show();
             }
         }
@@ -213,17 +209,6 @@ public class EinkDialog extends Dialog implements View.OnClickListener, SeekBar.
     }
 
     @Override
-    public void show() {
-        super.show();
-        WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
-        //layoutParams.gravity = Gravity.CENTER;
-        layoutParams.format = PixelFormat.TRANSLUCENT;
-        layoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT;
-        layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
-        getWindow().setAttributes(layoutParams);
-    }
-
-    @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         int id = buttonView.getId();
         Log.d(TAG, "id: " + id);
@@ -280,12 +265,15 @@ public class EinkDialog extends Dialog implements View.OnClickListener, SeekBar.
         }
     }
 
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        cancel();
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            return true;
+    public void dismissAllDialog() {
+        if (null != mEinkRefreshDialog && mEinkRefreshDialog.isShowing()) {
+            mEinkRefreshDialog.cancel();
+            mEinkRefreshDialog = null;
         }
-        return super.onKeyDown(keyCode, event);
+        if (null != mEinkAppBleachDialog && mEinkAppBleachDialog.isShowing()) {
+            mEinkAppBleachDialog.cancel();
+            mEinkAppBleachDialog = null;
+        }
+        cancel();
     }
 }

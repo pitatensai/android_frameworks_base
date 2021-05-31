@@ -147,6 +147,8 @@ import javax.inject.Inject;
 import dagger.Lazy;
 import android.os.EinkManager;
 import android.content.pm.PackageManager;
+import android.widget.Toast;
+
 /**
  * Fragment containing the NavigationBarFragment. Contains logic for what happens
  * on clicks and view states of the nav bar.
@@ -221,6 +223,11 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     public boolean mHomeBlockedThisTouch;
     private EinkDialog mEinkDialog;
     private Context mContext;
+    private ActivityManager mActivityManager;
+
+    private final String[] BLACK_EINK_CONFIG_APP = new String[] {
+            "com.android.launcher3",
+    };
 
     private Handler popupHandler = new Handler(){
         @Override
@@ -1128,6 +1135,28 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
 
     private void onEinkMenuClick(View v) {
         Log.d(TAG, "onEinkMenuClick mContext: " + mContext);
+        try {
+            String topPackageName = EinkSettingsProvider.packageName;
+            boolean queryTopActivityName = false;
+            if (queryTopActivityName) {
+                if (null == mActivityManager) {
+                    mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+                }
+                final List<ActivityManager.RunningTaskInfo> list = mActivityManager.getRunningTasks(2);
+                if (null != list && list.size() > 0) {
+                    topPackageName = list.get(0).topActivity.getPackageName();
+                }
+            }
+            Log.d(TAG, "onEinkMenuClick name: " + topPackageName);
+            for (String temp: BLACK_EINK_CONFIG_APP) {
+                if (temp.equals(topPackageName)) {
+                    Toast.makeText(mContext, R.string.eink_dialog_not_allow, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         popupHandler.sendEmptyMessageDelayed(0, 100);
     }
 
@@ -1140,6 +1169,7 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
         // and his ONLY options are to answer or reject the call.)
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                dismissEinkDialog();
                 mHomeBlockedThisTouch = false;
                 TelecomManager telecomManager =
                         getContext().getSystemService(TelecomManager.class);
@@ -1197,6 +1227,7 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     private boolean onRecentsTouch(View v, MotionEvent event) {
         int action = event.getAction() & MotionEvent.ACTION_MASK;
         if (action == MotionEvent.ACTION_DOWN) {
+            dismissEinkDialog();
             mCommandQueue.preloadRecentApps();
         } else if (action == MotionEvent.ACTION_CANCEL) {
             mCommandQueue.cancelPreloadRecentApps();
@@ -1648,6 +1679,13 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
             });
         } else {
             Log.d(TAG, "isShowEinkDialog: " + isShowEinkDialog);
+        }
+    }
+
+    private void dismissEinkDialog() {
+        if (null != mEinkDialog && mEinkDialog.isShowing()) {
+            mEinkDialog.dismissAllDialog();
+            mEinkDialog = null;
         }
     }
 }

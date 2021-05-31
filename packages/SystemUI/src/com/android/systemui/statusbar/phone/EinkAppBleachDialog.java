@@ -3,12 +3,9 @@ package com.android.systemui.statusbar.phone;
 import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
-import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.SeekBar;
@@ -16,7 +13,7 @@ import android.widget.TextView;
 
 import com.android.systemui.R;
 
-public class EinkAppBleachDialog extends Dialog implements
+public class EinkAppBleachDialog extends EinkBaseDialog implements
         SeekBar.OnSeekBarChangeListener, CompoundButton.OnCheckedChangeListener {
     private static final String TAG = "EinkAppBleachDialog";
 
@@ -30,9 +27,10 @@ public class EinkAppBleachDialog extends Dialog implements
 
     private Context mContext;
     private EinkSettingsManager mEinkSettingsManager;
+    private EinkDialog mEinkDialog;
 
-    public EinkAppBleachDialog(Context context) {
-        super(context);
+    public EinkAppBleachDialog(Context context, Dialog parentDialog) {
+        super(context, parentDialog);
         mContext = context;
     }
 
@@ -137,25 +135,5 @@ public class EinkAppBleachDialog extends Dialog implements
             Settings.Secure.putInt(mContext.getContentResolver(),
                     Settings.Secure.ACCESSIBILITY_HIGH_TEXT_CONTRAST_ENABLED, 0);
         }
-    }
-
-    @Override
-    public void show() {
-        super.show();
-        WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
-        //layoutParams.gravity = Gravity.CENTER;
-        layoutParams.format = PixelFormat.TRANSLUCENT;
-        layoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT;
-        layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
-        getWindow().setAttributes(layoutParams);
-    }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        cancel();
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
     }
 }

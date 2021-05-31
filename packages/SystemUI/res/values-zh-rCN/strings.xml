@@ -1115,4 +1115,5 @@
     <string name="eink_app_bleach_icon_color">"图标颜色"</string>
     <string name="eink_app_bleach_cover_color">"封面颜色"</string>
     <string name="eink_app_bleach_bg_color">"背景颜色"</string>
+    <string name="eink_dialog_not_allow">"当前界面不允许进行配置"</string>
 </resources>
