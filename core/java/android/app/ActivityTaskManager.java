@@ -31,6 +31,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.os.SystemProperties;
 import android.util.Singleton;
 
 import java.util.List;
@@ -277,7 +278,8 @@ public class ActivityTaskManager {
         // supported regardless of device memory characteristics.
         boolean isWatch = context.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_WATCH);
-        return (!ActivityManager.isLowRamDeviceStatic() || isWatch)
+        boolean isEbook = SystemProperties.getBoolean("ro.vendor.eink", false);
+        return (!ActivityManager.isLowRamDeviceStatic() || isWatch || isEbook)
                 && Resources.getSystem().getBoolean(
                 com.android.internal.R.bool.config_supportsMultiWindow);
     }
