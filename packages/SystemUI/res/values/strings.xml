@@ -2899,4 +2899,5 @@
     <string name="eink_app_bleach_icon_color">Icons Color</string>
     <string name="eink_app_bleach_cover_color">Cover Color</string>
     <string name="eink_app_bleach_bg_color">BG Color</string>
+    <string name="eink_dialog_not_allow">Not allow to start config in current page</string>
 </resources>
