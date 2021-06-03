@@ -23,9 +23,9 @@ public class EinkSettingsProvider extends ContentProvider {
     private static final String TAG = "EinkSettingsProvider";
     public static final int EINKSETTINGS = 0;
     public static final int EINKSETTINGS_UPDATE = 1;
-    public static final int INIT_PROGRASS_DPI = 320;
     public static final int INIT_PROGRASS_REFRESH_FREQUENCY = 20;
     public static final String INIT_PROGRASS_CONTRAST = "0xffccba9876543000";
+    public static final String INIT_DPI_PROPERTY = "ro.sf.lcd_density";
     private static final String COMMON_REFRESH_MODE = "7";
     private static final String AUTO_REFRESH_MODE = "0";
     private static final String A2_REFRESH_MODE = "12";
@@ -35,12 +35,14 @@ public class EinkSettingsProvider extends ContentProvider {
     public static final String AUTHORITY = "com.android.systemui.eink";
     public static final String EINKSETTINGS_TABLE = "EinkSettings";
     public static final Uri URI_EINK_SETTINGS = Uri.parse("content://com.android.systemui.eink/einksettings");
-    public static int DPI = 320;
-    public static int refreshFrequency = 20;
-    public static int contrast = 0;
-    public static String strContrast = "0xffccba9876543000";
-    public static String refreshMode = "7";
-    public static int isRefreshSetting = 0;
+    public static int INIT_PROGRASS_DPI;
+    public static int DPI;
+    public static int refreshFrequency;
+    public static int contrast;
+    public static String strContrast;
+    public static String refreshMode;
+    public static boolean isDpiSetting;
+    public static boolean isRefreshSetting;
     public static int mAppAnimFilter;//动画过滤
     public static boolean mIsAppBleach;//是否启用应用漂白
     public static boolean mIsAppBleachTextPlus;//字体增强
@@ -58,14 +60,20 @@ public class EinkSettingsProvider extends ContentProvider {
         mUriMatcher.addURI(AUTHORITY, "einksettingsupdate", EINKSETTINGS_UPDATE);
     }
 
+    public EinkSettingsProvider() {
+        try {
+            INIT_PROGRASS_DPI = Integer.parseInt(EinkSettingsManager.getProperty(INIT_DPI_PROPERTY));
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public boolean onCreate() {
         Log.d(TAG, "onCreate: ");
         mEinkSettingsDataBaseHelper = new EinkSettingsDataBaseHelper(getContext(), "Eink", null, 1);
         if (mEinkSettingsDataBaseHelper != null) {
-            Log.d(TAG, "mEinkSettingsDataBaseHelper != null ");
             mDB = mEinkSettingsDataBaseHelper.getWritableDatabase();
-            Log.d(TAG, "mDB: " + mDB);
         }
         if(mEinkSettingsManager == null) {
             mEinkSettingsManager = new EinkSettingsManager(getContext());
@@ -91,35 +99,21 @@ public class EinkSettingsProvider extends ContentProvider {
                 if(cursor.getCount() > 0) {
                     Log.d(TAG, "cursor.getCount() > 0 DPI: " + DPI);
                     if(cursor.moveToFirst()) {
-                        //设置查到的DPI
-                        DPI = cursor.getInt(cursor.getColumnIndex("app_dpi"));
-                        Log.d(TAG, "DPI: " + DPI);
-                        mEinkSettingsManager.SetSystemDPI(DPI);
-                        //赋值查到的是否开启刷新模式
-                        isRefreshSetting = cursor.getInt(cursor.getColumnIndex("is_refresh_setting"));
-                        Log.d(TAG, "isRefreshSetting: " + isRefreshSetting);
-                        //赋值查到的刷新模式
-                        refreshMode = cursor.getString(cursor.getColumnIndex("refresh_mode"));
-                        Log.d(TAG, "refreshMode: " + refreshMode);
-                        //赋值查到的全刷频率
-                        refreshFrequency = cursor.getInt(cursor.getColumnIndex("refresh_frequency"));
-                        Log.d(TAG, "refreshFrequency: " + refreshFrequency);
-                        //赋值查到的对比度
-                        contrast = cursor.getInt(cursor.getColumnIndex("app_contrast"));
-                        Log.d(TAG, "contrast: " + contrast);
-                        if(contrast == 0) {
-                            mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_CONTRAST, INIT_PROGRASS_CONTRAST);
-                        } else {
-                            strContrast = mEinkSettingsManager.convertArrayToString(mEinkSettingsManager.convertLevelToArray(contrast));
-                            mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_CONTRAST, strContrast);
-                        }
-                        //刷新设置开启下才设置
-                        if(isRefreshSetting == 1) {
-                            //设置默认刷新模式
-                            mEinkSettingsManager.setEinkMode(refreshMode);
-                            //设置默认全刷频率
-                            mEinkSettingsManager.setProperty(EINK_REFRESH_FREQUENCY, "" + refreshFrequency);
-                        }
+                        //DPI设置
+                        DPI = cursor.getInt(cursor.getColumnIndex(
+                                EinkSettingsDataBaseHelper.APP_DPI));
+                        isDpiSetting = 1 == cursor.getInt(cursor.getColumnIndex(
+                                EinkSettingsDataBaseHelper.IS_DPI_SETTING));
+                        //刷新设置
+                        isRefreshSetting = 1 == cursor.getInt(cursor.getColumnIndex(
+                                EinkSettingsDataBaseHelper.IS_REFRESH_SETTING));
+                        refreshMode = cursor.getString(cursor.getColumnIndex(
+                                EinkSettingsDataBaseHelper.REFRESH_MODE));
+                        refreshFrequency = cursor.getInt(cursor.getColumnIndex(
+                                EinkSettingsDataBaseHelper.REFRESH_FREQUENCY));
+                        //对比度设置
+                        contrast = cursor.getInt(cursor.getColumnIndex(
+                                EinkSettingsDataBaseHelper.APP_CONTRAST));
                         //动画过滤
                         mAppAnimFilter = cursor.getInt(cursor.getColumnIndex(
                                 EinkSettingsDataBaseHelper.APP_ANIM_FILTER));
@@ -136,21 +130,38 @@ public class EinkSettingsProvider extends ContentProvider {
                                 EinkSettingsDataBaseHelper.APP_BLEACH_BG_COLOR));
                     }
                 } else {
-                    //设置默认DPI
-                    mEinkSettingsManager.SetSystemDPI(INIT_PROGRASS_DPI);
-                    //设置默认对比度
-                    //strContrast = mEinkSettingsManager.convertContrastToString(EinkSettingsProvider.contrast);
-                    mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_CONTRAST, INIT_PROGRASS_CONTRAST);
-                    //设置默认刷新模式
-                    mEinkSettingsManager.setEinkMode(EinkManager.EinkMode.EPD_PART_GC16);
-                    //设置默认全刷频率
-                    mEinkSettingsManager.setProperty(EINK_REFRESH_FREQUENCY, "" + INIT_PROGRASS_REFRESH_FREQUENCY);
+                    DPI = INIT_PROGRASS_DPI;
+                    isDpiSetting = false;
+                    contrast = 0;
+                    isRefreshSetting = false;
+                    refreshMode = COMMON_REFRESH_MODE;
+                    refreshFrequency = 20;
                     mAppAnimFilter = 0;
                     mIsAppBleach = false;
                     mIsAppBleachTextPlus = false;
                     mAppBleachIconColor = 0;
                     mAppBleachCoverColor = 0;
                     mAppBleachBgColor = 0;
+                }
+                if(isDpiSetting) {
+                    mEinkSettingsManager.SetSystemDPI(DPI);
+                } else {
+                    mEinkSettingsManager.SetSystemDPI(INIT_PROGRASS_DPI);
+                }
+                if(contrast == 0) {
+                    mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_CONTRAST, INIT_PROGRASS_CONTRAST);
+                } else {
+                    strContrast = mEinkSettingsManager.convertArrayToString(mEinkSettingsManager.convertLevelToArray(contrast));
+                    mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_CONTRAST, strContrast);
+                }
+                //刷新设置开启下才设置
+                if(isRefreshSetting) {
+                    mEinkSettingsManager.setEinkMode(refreshMode);
+                    mEinkSettingsManager.setProperty(EINK_REFRESH_FREQUENCY, String.valueOf(refreshFrequency));
+                } else {
+                    mEinkSettingsManager.setEinkMode(EinkManager.EinkMode.EPD_PART_GC16);
+                    mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_REFRESH_FREQUENCY,
+                            String.valueOf(EinkSettingsProvider.INIT_PROGRASS_REFRESH_FREQUENCY));
                 }
                 ContentResolver contentResolver = getContext().getContentResolver();
                 if (mIsAppBleach && mIsAppBleachTextPlus) {
@@ -163,7 +174,6 @@ public class EinkSettingsProvider extends ContentProvider {
                 EinkSettingsManager.updateAppBleach(getContext());
                 break;
         }
-        Log.d(TAG, "systemui query done");
         return cursor;
     }
 
