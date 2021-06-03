@@ -35,8 +35,8 @@ public class EinkSettingsManager {
         });
     }
 
-    public String getProperty(String key, String defaultValue) {
-        String value = defaultValue;
+    public static String getProperty(String key) {
+        String value = "";
         try {
             Class c = Class.forName("android.os.SystemProperties");
             Method get = c.getMethod("get", String.class);
@@ -139,7 +139,6 @@ public class EinkSettingsManager {
                 }
             }
         }
-        Log.d(TAG, "strContrast: " + strContrast);
         return strContrast;
     }
 

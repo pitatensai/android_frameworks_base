@@ -3336,11 +3336,6 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
                 @Override
                 public void run() {
                     Cursor cursor = null;
-                    int DPI = 320;
-                    int contrast = 0;
-                    int refreshFrequency = 20;
-                    String refreshMode = "7";
-                    int isRefreshSetting = 0;
                     try {
                         cursor = mService.mContext.getContentResolver().query(URI_EINK_SETTINGS_UPDATE,
                             null, "package_name = ?", new String[]{r.packageName}, null);
@@ -3350,17 +3345,10 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
                     }
                     if(null != cursor) {
                         if(cursor.getCount() > 0) {
-                            if(cursor.moveToFirst()) {
-                                DPI = cursor.getInt(cursor.getColumnIndex("app_dpi"));
-                            }
+                            Log.v(TAG, "EINK++ cursor.getCount() > 0");
                         } else {
                             ContentValues values = new ContentValues();
-                            values.put("app_dpi", DPI);
-                            values.put("app_contrast", contrast);
                             values.put("package_name", r.packageName);
-                            values.put("refresh_mode", refreshMode);
-                            values.put("refresh_frequency", refreshFrequency);
-                            values.put("is_refresh_setting", isRefreshSetting);
                             mService.mContext.getContentResolver().insert(URI_EINK_SETTINGS, values);
                         }
                     }

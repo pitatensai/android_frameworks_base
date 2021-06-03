@@ -31,7 +31,7 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
     private Button mRefreshButton;
     private SeekBar mDpiSeekbar, mAnimationSeekbar, mContrastSeekbar;
     private TextView mDpiText, mAnimationText, mContrastText;
-    private CheckBox mRefreshCheckbox;
+    private CheckBox mDpiCheckbox,mRefreshCheckbox;
     private CheckBox mAppBleachCheckbox;
     private Button mAppBleachSetButton;
     private static final int SET_DPI_TEXT = 0;
@@ -47,11 +47,12 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case SET_DPI_TEXT:
+                /*case SET_DPI_TEXT:
                     mDpiText.setText(""+EinkSettingsProvider.DPI);
                     break;
                 case SET_DPI_SEEKBAR:
                     mDpiSeekbar.setProgress(EinkSettingsProvider.DPI - EinkSettingsProvider.INIT_PROGRASS_DPI);
+                    mDpiSeekbar.setEnabled(isChecked);
                     break;
                 case SET_IS_REFRESH_SETTING:
                     if(EinkSettingsProvider.isRefreshSetting == 0)
@@ -64,6 +65,15 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
                     break;
                 case SET_CONTRAST_SEEKBAR:
                     mContrastSeekbar.setProgress(EinkSettingsProvider.contrast);
+                    break;
+                case SET_IS_DPI_SETTING:
+                    if(EinkSettingsProvider.isDpiSetting == 0)
+                        mDpiCheckbox.setChecked(false);
+                    else if(EinkSettingsProvider.isDpiSetting == 1)
+                        mDpiCheckbox.setChecked(true);
+                    break;*/
+                case SET_DPI_SEEKBAR:
+                    mDpiSeekbar.setEnabled(EinkSettingsProvider.isDpiSetting);
                     break;
             }
         }
@@ -83,31 +93,29 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
         if(mEinkSettingsManager == null) {
             mEinkSettingsManager = new EinkSettingsManager(mContext);
         }
-        mDpiSeekbar = (SeekBar) findViewById(R.id.eink_dialog_dpi_seekbar);
+        //DPI设置
         mDpiText = (TextView) findViewById(R.id.eink_dialog_dpi_edit);
-        mContrastSeekbar = (SeekBar) findViewById(R.id.eink_dialog_contrast_seekbar);
-        mContrastText = (TextView) findViewById(R.id.eink_dialog_contrast_edit);
-        mRefreshButton = (Button) findViewById(R.id.eink_dialog_refresh_button);
-        mRefreshCheckbox = (CheckBox) findViewById(R.id.eink_dialog_refresh_checkbox);
-        Message setDPITextMessage = new Message();
-        setDPITextMessage.what = SET_DPI_TEXT;
-        EinkDialogHandler.sendMessage(setDPITextMessage);
-        Message setDPISeekbarMessage = new Message();
-        setDPISeekbarMessage.what = SET_DPI_SEEKBAR;
-        EinkDialogHandler.sendMessage(setDPISeekbarMessage);
-        Message setContrastTextMessage = new Message();
-        setContrastTextMessage.what = SET_CONTRAST_TEXT;
-        EinkDialogHandler.sendMessage(setContrastTextMessage);
-        Message setContrastSeekbarMessage = new Message();
-        setContrastSeekbarMessage.what = SET_CONTRAST_SEEKBAR;
-        EinkDialogHandler.sendMessage(setContrastSeekbarMessage);
-        Message setRefreshModeButtonMessage = new Message();
-        setRefreshModeButtonMessage.what = SET_IS_REFRESH_SETTING;
-        EinkDialogHandler.sendMessage(setRefreshModeButtonMessage);
+        mDpiText.setText(String.valueOf(EinkSettingsProvider.DPI));
+        mDpiCheckbox = (CheckBox) findViewById(R.id.eink_dialog_dpi_checkbox);
+        mDpiCheckbox.setOnCheckedChangeListener(this);
+        mDpiCheckbox.setChecked(EinkSettingsProvider.isDpiSetting);
+        mDpiSeekbar = (SeekBar) findViewById(R.id.eink_dialog_dpi_seekbar);
         mDpiSeekbar.setOnSeekBarChangeListener(this);
+        mDpiSeekbar.setProgress(EinkSettingsProvider.DPI - EinkSettingsProvider.INIT_PROGRASS_DPI);
+        mDpiSeekbar.setEnabled(mDpiCheckbox.isChecked());
+        //对比度设置
+        mContrastText = (TextView) findViewById(R.id.eink_dialog_contrast_edit);
+        mContrastText.setText(String.valueOf(EinkSettingsProvider.contrast));
+        mContrastSeekbar = (SeekBar) findViewById(R.id.eink_dialog_contrast_seekbar);
         mContrastSeekbar.setOnSeekBarChangeListener(this);
-        mRefreshButton.setOnClickListener(this);
+        mContrastSeekbar.setProgress(EinkSettingsProvider.contrast);
+        //刷新设置
+        mRefreshCheckbox = (CheckBox) findViewById(R.id.eink_dialog_refresh_checkbox);
+        mRefreshCheckbox.setChecked(EinkSettingsProvider.isRefreshSetting);
         mRefreshCheckbox.setOnCheckedChangeListener(this);
+        mRefreshButton = (Button) findViewById(R.id.eink_dialog_refresh_button);
+        mRefreshButton.setOnClickListener(this);
+        mRefreshButton.setEnabled(mRefreshCheckbox.isChecked());
         //应用漂白
         mAppBleachCheckbox = (CheckBox) findViewById(R.id.eink_dialog_bleach_checkbox);
         mAppBleachCheckbox.setChecked(EinkSettingsProvider.mIsAppBleach);
@@ -120,9 +128,11 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
     @Override
     public void onClick(View v) {
         int id = v.getId();
-        Log.d(TAG, "EinkSettingsProvider.isRefreshSetting: " + EinkSettingsProvider.isRefreshSetting);
-        if (id == R.id.eink_dialog_refresh_button) {
-            if (EinkSettingsProvider.isRefreshSetting == 1) {
+        if(id == R.id.eink_dialog_refresh_button) {
+            if(EinkSettingsProvider.isRefreshSetting) {
+                if (null != mEinkRefreshDialog && mEinkRefreshDialog.isShowing()) {
+                    return;
+                }
                 mEinkRefreshDialog = new EinkRefreshDialog(mContext, this);
                 mEinkRefreshDialog.show();
             }
@@ -141,18 +151,14 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         int id = seekBar.getId();
         if(id == R.id.eink_dialog_dpi_seekbar) {
-            //从seekbar取dpi
-            EinkSettingsProvider.DPI = seekBar.getProgress() + EinkSettingsProvider.INIT_PROGRASS_DPI;
-            Log.d(TAG, "EinkSettingsProvider.DPI: " + EinkSettingsProvider.DPI);
-            Message setDPITextMessage = new Message();
-            setDPITextMessage.what = SET_DPI_TEXT;
-            EinkDialogHandler.sendMessage(setDPITextMessage);
+            if(EinkSettingsProvider.isDpiSetting) {
+                EinkSettingsProvider.DPI = seekBar.getProgress() + EinkSettingsProvider.INIT_PROGRASS_DPI;
+                mDpiText.setText(String.valueOf(EinkSettingsProvider.DPI));
+            }
         } else if(id == R.id.eink_dialog_animation_seekbar) {
         } else if(id == R.id.eink_dialog_contrast_seekbar) {
             EinkSettingsProvider.contrast = seekBar.getProgress();
-            Message setContrastTextMessage = new Message();
-            setContrastTextMessage.what = SET_CONTRAST_TEXT;
-            EinkDialogHandler.sendMessage(setContrastTextMessage);
+            mContrastText.setText(String.valueOf(EinkSettingsProvider.contrast));
         }
     }
 
@@ -165,31 +171,18 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
     public void onStopTrackingTouch(SeekBar seekBar) {
         int id = seekBar.getId();
         if(id == R.id.eink_dialog_dpi_seekbar) {
-            Log.d(TAG, "eink_dialog_dpi_seekbar is onClick ");
-            //设置dpi
-            mEinkSettingsManager.SetSystemDPI(EinkSettingsProvider.DPI);
-            //把dpi更新到数据库
-            Log.d(TAG, "packageName: " + EinkSettingsProvider.packageName);
-            ContentValues values = new ContentValues();
-            values.put("app_dpi", EinkSettingsProvider.DPI);
-            int updatedRows = mContext.getContentResolver().update(EinkSettingsProvider.URI_EINK_SETTINGS,
-                    values, "package_name = ?", new String[]{EinkSettingsProvider.packageName});
-            Log.d(TAG, "updatedRows: " + updatedRows);
-            /*//全刷
-            new Thread(){
-                @Override
-                public void run() {
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    mEinkManager.sendOneFullFrame();
-                }
-            }.start();*/
+            if(EinkSettingsProvider.isDpiSetting) {
+                //设置dpi
+                mEinkSettingsManager.SetSystemDPI(EinkSettingsProvider.DPI);
+                //把dpi更新到数据库
+                ContentValues values = new ContentValues();
+                values.put(EinkSettingsDataBaseHelper.APP_DPI, EinkSettingsProvider.DPI);
+                mContext.getContentResolver().update(EinkSettingsProvider.URI_EINK_SETTINGS,
+                        values, EinkSettingsDataBaseHelper.PACKAGE_NAME + " = ?",
+                        new String[]{EinkSettingsProvider.packageName});
+            }
         } else if(id == R.id.eink_dialog_animation_seekbar) {
-        }else if(id == R.id.eink_dialog_contrast_seekbar) {
-            Log.d(TAG, "eink_dialog_contrast_seekbar is onClick ");
+        } else if(id == R.id.eink_dialog_contrast_seekbar) {
             //设置对比度
             if(EinkSettingsProvider.contrast == 0) {
                 mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_CONTRAST, EinkSettingsProvider.INIT_PROGRASS_CONTRAST);
@@ -199,49 +192,35 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
                 mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_CONTRAST, EinkSettingsProvider.strContrast);
             }
             //把对比度更新到数据库
-            Log.d(TAG, "packageName: " + EinkSettingsProvider.packageName);
             ContentValues values = new ContentValues();
-            values.put("app_contrast", EinkSettingsProvider.contrast);
-            int updatedRows = mContext.getContentResolver().update(EinkSettingsProvider.URI_EINK_SETTINGS,
-                    values, "package_name = ?", new String[]{EinkSettingsProvider.packageName});
-            Log.d(TAG, "updatedRows: " + updatedRows);
+            values.put(EinkSettingsDataBaseHelper.APP_CONTRAST, EinkSettingsProvider.contrast);
+            mContext.getContentResolver().update(EinkSettingsProvider.URI_EINK_SETTINGS,
+                    values, EinkSettingsDataBaseHelper.PACKAGE_NAME + " = ?",
+                    new String[]{EinkSettingsProvider.packageName});
         }
     }
 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         int id = buttonView.getId();
-        Log.d(TAG, "id: " + id);
         if(id == R.id.eink_dialog_refresh_checkbox) {
-            if(isChecked) {
-                //修改标志位
-                EinkSettingsProvider.isRefreshSetting = 1;
-                //把标志位更新到数据库
-                Log.d(TAG, "packageName: " + EinkSettingsProvider.packageName);
-                ContentValues values = new ContentValues();
-                values.put("is_refresh_setting", EinkSettingsProvider.isRefreshSetting);
-                int updatedRows = mContext.getContentResolver().update(EinkSettingsProvider.URI_EINK_SETTINGS,
-                        values, "package_name = ?", new String[]{EinkSettingsProvider.packageName});
-                Log.d(TAG, "updatedRows: " + updatedRows);
-                //根据属性值设置
+            EinkSettingsProvider.isRefreshSetting = isChecked;
+            ContentValues values = new ContentValues();
+            values.put(EinkSettingsDataBaseHelper.IS_REFRESH_SETTING,
+                    EinkSettingsProvider.isRefreshSetting?1:0);
+            mContext.getContentResolver().update(EinkSettingsProvider.URI_EINK_SETTINGS,
+                    values, EinkSettingsDataBaseHelper.PACKAGE_NAME + " = ?",
+                    new String[]{EinkSettingsProvider.packageName});
+            if(EinkSettingsProvider.isRefreshSetting) {
                 mEinkSettingsManager.setEinkMode(EinkSettingsProvider.refreshMode);
-                mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_REFRESH_FREQUENCY, "" + EinkSettingsProvider.refreshFrequency);
+                mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_REFRESH_FREQUENCY,
+                        String.valueOf(EinkSettingsProvider.refreshFrequency));
             } else {
-                //修改标志位
-                EinkSettingsProvider.isRefreshSetting = 0;
-                //把dpi更新到数据库
-                Log.d(TAG, "packageName: " + EinkSettingsProvider.packageName);
-                ContentValues values = new ContentValues();
-                values.put("is_refresh_setting", EinkSettingsProvider.isRefreshSetting);
-                int updatedRows = mContext.getContentResolver().update(EinkSettingsProvider.URI_EINK_SETTINGS,
-                        values, "package_name = ?", new String[]{EinkSettingsProvider.packageName});
-                Log.d(TAG, "updatedRows: " + updatedRows);
-                //根据默认属性值设置
-                //设置默认刷新模式
                 mEinkSettingsManager.setEinkMode(EinkManager.EinkMode.EPD_PART_GC16);
-                //设置默认全刷频率
-                mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_REFRESH_FREQUENCY, "" + EinkSettingsProvider.INIT_PROGRASS_REFRESH_FREQUENCY);
+                mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_REFRESH_FREQUENCY,
+                        String.valueOf(EinkSettingsProvider.INIT_PROGRASS_REFRESH_FREQUENCY));
             }
+            mRefreshButton.setEnabled(isChecked);
         } else if (id == R.id.eink_dialog_bleach_checkbox) {
             EinkSettingsProvider.mIsAppBleach = isChecked;
             ContentValues values = new ContentValues();
@@ -262,6 +241,22 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
             }
             EinkSettingsManager.updateAppBleach(mContext);
             mAppBleachSetButton.setEnabled(isChecked);
+        } else if(id == R.id.eink_dialog_dpi_checkbox) {
+            EinkSettingsProvider.isDpiSetting = isChecked;
+            ContentValues values = new ContentValues();
+            values.put(EinkSettingsDataBaseHelper.IS_DPI_SETTING,
+                    EinkSettingsProvider.isDpiSetting?1:0);
+            mContext.getContentResolver().update(EinkSettingsProvider.URI_EINK_SETTINGS,
+                    values, EinkSettingsDataBaseHelper.PACKAGE_NAME + " = ?",
+                    new String[]{EinkSettingsProvider.packageName});
+            if(EinkSettingsProvider.isDpiSetting) {
+                mEinkSettingsManager.SetSystemDPI(EinkSettingsProvider.DPI);
+            } else {
+                mEinkSettingsManager.SetSystemDPI(EinkSettingsProvider.INIT_PROGRASS_DPI);
+            }
+            Message setDPISeekbarMessage = new Message();
+            setDPISeekbarMessage.what = SET_DPI_SEEKBAR;
+            EinkDialogHandler.sendMessage(setDPISeekbarMessage);
         }
     }
 

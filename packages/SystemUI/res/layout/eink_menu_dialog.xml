@@ -5,16 +5,16 @@
     android:layout_gravity="center"
     android:clickable="true">
 
-        <TextView
-            android:id="@+id/eink_dialog_title_text"
-            android:textColor="#000000"
-            android:textSize="18sp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_alignParentTop="true"
-            android:layout_marginTop="20dp"
-            android:text="@string/eink_app_optimize" />
+    <TextView
+        android:id="@+id/eink_dialog_title_text"
+        android:textColor="#000000"
+        android:textSize="18sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="20dp"
+        android:text="@string/eink_app_optimize" />
 
     <RelativeLayout
         android:layout_width="wrap_content"
@@ -48,7 +48,13 @@
             android:layout_height="wrap_content"
             android:maxHeight="2dp"
             android:max="240"
-            android:layout_alignParentRight="true" />
+            android:layout_marginLeft="30dp"
+            android:layout_toRightOf="@id/eink_dialog_dpi_edit"/>
+        <CheckBox
+            android:id="@+id/eink_dialog_dpi_checkbox"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignParentRight="true"/>
     </RelativeLayout>
 
     <RelativeLayout
