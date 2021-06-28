@@ -143,11 +143,6 @@ public class EinkSettingsProvider extends ContentProvider {
                     mAppBleachCoverColor = 0;
                     mAppBleachBgColor = 0;
                 }
-                if(isDpiSetting) {
-                    mEinkSettingsManager.SetSystemDPI(DPI);
-                } else {
-                    mEinkSettingsManager.SetSystemDPI(INIT_PROGRASS_DPI);
-                }
                 if(contrast == 0) {
                     mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_CONTRAST, INIT_PROGRASS_CONTRAST);
                 } else {

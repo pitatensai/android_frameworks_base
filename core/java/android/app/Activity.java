@@ -973,7 +973,12 @@ public class Activity extends ContextThemeWrapper
         @Override
         public void onReceive(Context context, Intent intent) {
             Slog.v(TAG, "onReceive onAppBleachConfigChanged ");
-            refreshCurrentView();
+            String type = intent.getStringExtra("control_type");
+            if("dpi".equals(type)) {
+                recreate();
+            } else if ("bleach".equals(type)) {
+                refreshCurrentView();
+            }
         }
     }
 

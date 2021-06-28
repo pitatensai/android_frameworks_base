@@ -153,6 +153,14 @@ public class EinkSettingsManager {
         sb.append(EinkSettingsProvider.mAppBleachBgColor);
         Settings.System.putString(context.getContentResolver(),
                 "app_bleach_filter", sb.toString());
-        context.sendBroadcast(new Intent("com.rockchip.eink.appcustom"));
+        Intent intent = new Intent("com.rockchip.eink.appcustom");
+        intent.putExtra("control_type", "bleach");
+        context.sendBroadcast(intent);
+    }
+
+    public static void setAppDPI(Context context) {
+        Intent intent = new Intent("com.rockchip.eink.appcustom");
+        intent.putExtra("control_type", "dpi");
+        context.sendBroadcast(intent);
     }
 }
