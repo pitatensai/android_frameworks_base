@@ -29,6 +29,8 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.content.ContentValues;
+import android.database.Cursor;
 import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
@@ -40,6 +42,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.UserHandle;
+import android.os.SystemProperties;
 import android.view.Display;
 import android.view.DisplayAdjustments;
 import android.view.WindowManager.LayoutParams.WindowType;
@@ -77,8 +80,44 @@ public class ContextWrapper extends Context {
         if (mBase != null) {
             throw new IllegalStateException("Base context already set");
         }
-        mBase = base;
+        if (null == base) {
+            mBase = null;
+        } else {
+            String packageName = base.getPackageName();
+            mBase = updateResources(base, packageName);
+        }
     }
+
+    private Context updateResources(Context context, String packageName) {
+        int densityDpi = SystemProperties.getInt("ro.sf.lcd_density", -1);
+        if (null == packageName || -1 == densityDpi) {
+            return context;
+        }
+        Uri URI_EINK_SETTINGS = Uri.parse("content://com.android.systemui.eink/einksettings");
+        Cursor cursor = null;
+        try {
+            cursor = context.getContentResolver().query(URI_EINK_SETTINGS,
+                null, "package_name = ?", new String[]{packageName}, null);
+            if(null != cursor) {
+                if(cursor.getCount() > 0) {
+                    if(cursor.moveToFirst()) {
+                        densityDpi = cursor.getInt(cursor.getColumnIndex("app_dpi"));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            return context;
+        } finally {
+            if (null != cursor) {
+                cursor.close();
+            }
+        }
+
+        Resources resources = context.getResources();
+        Configuration configuration = resources.getConfiguration();
+        configuration.densityDpi = densityDpi;
+        return context.createConfigurationContext(configuration);
+   }
 
     /**
      * @return the base context as set by the constructor or setBaseContext

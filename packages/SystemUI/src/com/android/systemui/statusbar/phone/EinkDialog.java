@@ -172,14 +172,14 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
         int id = seekBar.getId();
         if(id == R.id.eink_dialog_dpi_seekbar) {
             if(EinkSettingsProvider.isDpiSetting) {
-                //设置dpi
-                mEinkSettingsManager.SetSystemDPI(EinkSettingsProvider.DPI);
                 //把dpi更新到数据库
                 ContentValues values = new ContentValues();
                 values.put(EinkSettingsDataBaseHelper.APP_DPI, EinkSettingsProvider.DPI);
                 mContext.getContentResolver().update(EinkSettingsProvider.URI_EINK_SETTINGS,
                         values, EinkSettingsDataBaseHelper.PACKAGE_NAME + " = ?",
                         new String[]{EinkSettingsProvider.packageName});
+                //设置dpi
+                mEinkSettingsManager.setAppDPI(mContext);
             }
         } else if(id == R.id.eink_dialog_animation_seekbar) {
         } else if(id == R.id.eink_dialog_contrast_seekbar) {
@@ -250,9 +250,14 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
                     values, EinkSettingsDataBaseHelper.PACKAGE_NAME + " = ?",
                     new String[]{EinkSettingsProvider.packageName});
             if(EinkSettingsProvider.isDpiSetting) {
-                mEinkSettingsManager.SetSystemDPI(EinkSettingsProvider.DPI);
+                mEinkSettingsManager.setAppDPI(mContext);
             } else {
-                mEinkSettingsManager.SetSystemDPI(EinkSettingsProvider.INIT_PROGRASS_DPI);
+                values = new ContentValues();
+                values.put(EinkSettingsDataBaseHelper.APP_DPI, EinkSettingsProvider.INIT_PROGRASS_DPI);
+                mContext.getContentResolver().update(EinkSettingsProvider.URI_EINK_SETTINGS,
+                        values, EinkSettingsDataBaseHelper.PACKAGE_NAME + " = ?",
+                        new String[]{EinkSettingsProvider.packageName});
+                mEinkSettingsManager.setAppDPI(mContext);
             }
             Message setDPISeekbarMessage = new Message();
             setDPISeekbarMessage.what = SET_DPI_SEEKBAR;
