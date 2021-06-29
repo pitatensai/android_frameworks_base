@@ -66,7 +66,9 @@ public class EinkMode {
     public static final String EPD_PART_GCC16 ="11";
     public static final String EPD_A2 ="12";
     public static final String EPD_DU ="13";
-    public static final String EPD_RESET ="14";
+    public static final String EPD_DU4 ="14";
+    public static final String EPD_A2_ENTER ="15";
+    public static final String EPD_RESET ="16";
 }
 
 
