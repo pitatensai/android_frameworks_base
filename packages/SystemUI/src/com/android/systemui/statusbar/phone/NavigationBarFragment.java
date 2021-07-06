@@ -1118,7 +1118,7 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     }
 
     private void onRefreshClick(View v) {
-            onRefreshRepaintEverything();
+        onRefreshRepaintEverything();
     }
 
     private void onSwitchModeClick(View v) {
