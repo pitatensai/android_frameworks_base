@@ -21,7 +21,7 @@
     android:layout_width="@dimen/navigation_key_width"
     android:layout_height="match_parent"
     android:layout_weight="0"
-    systemui:keyCode="88"
+    systemui:keyCode="0"
     android:scaleType="center"
     android:contentDescription="@string/accessibility_refresh"
     android:paddingStart="@dimen/navigation_key_padding"
