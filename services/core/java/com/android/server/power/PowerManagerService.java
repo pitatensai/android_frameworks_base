@@ -881,7 +881,6 @@ public final class PowerManagerService extends SystemService
     private native void nativeWake();
     private boolean mSpew = false;
     private int mIdleDelay;
-    private boolean mMusicPlaying = false;
     private boolean mUserBootComplete = false;
     private boolean mIdleWakeUp = true;
     private AlarmManager mAlarmManager;
@@ -889,7 +888,6 @@ public final class PowerManagerService extends SystemService
     private final String USER_TIMEOUT_ACTION = "user_timeout_action";
     private BroadcastReceiver mRtcReceiver;
     private BroadcastReceiver mBootReceiver;
-    private BroadcastReceiver mMusicReceiver;
     private RtcAlarmHelper mIdleWakeAlarmHelper;//wakeup for idle wakeup.
     private RtcAlarmHelper mUserTimeoutAlarmHelper;//wakeup for user activity timeout.
     private PowerManager.WakeLock mAlarmHelperWakeLock;
@@ -967,7 +965,14 @@ public final class PowerManagerService extends SystemService
                     mAlarmHelperWakeLock.acquire(500);
                 mIdleWakeAlarmHelper.setAlarm(wakeTime);
             }
-            nativeIdle();
+            //if system block suspend, cancle idle this time and postDelay
+            int SuspendBlockerCount = ((SuspendBlockerImpl)mWakeLockSuspendBlocker).currentCount();
+            Slog.d(TAG, "mWakeLockSuspendBlocker currentCount = " + SuspendBlockerCount);
+            if (0 == SuspendBlockerCount) {
+                nativeIdle();
+            } else {
+                mHandler.postDelayed(mIdleTimer, mIdleDelay);
+            }
         }
     };
 
@@ -976,7 +981,7 @@ public final class PowerManagerService extends SystemService
             Slog.d(TAG, "resetIdle:" + reset);
         mHandler.removeCallbacks(mIdleTimer);
         mIdleWakeAlarmHelper.cancel();
-        if (reset && mUserBootComplete && !mMusicPlaying) {
+        if (reset && mUserBootComplete) {
             nativeWake();
             int newIdleDelay = SystemProperties.getInt("persist.sys.idle-delay", 10000);
             if (newIdleDelay != mIdleDelay)
@@ -1216,25 +1221,12 @@ public final class PowerManagerService extends SystemService
             }
         };
 
-        mMusicReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                mMusicPlaying = intent.getBooleanExtra("playing", false);
-                if (mMusicPlaying)
-                    Slog.d(TAG, "music is playing");
-            }
-        };
-
         {
             IntentFilter filter = new IntentFilter();
             filter.addAction(IDLE_WAKE_ACTION);
             filter.addAction(USER_TIMEOUT_ACTION);
             filter.addAction(Intent.ACTION_TIME_CHANGED);
             mContext.registerReceiver(mRtcReceiver, filter);
-
-            filter = new IntentFilter();
-            filter.addAction("com.android.music.playstatechanged");
-            mContext.registerReceiver(mMusicReceiver, filter);
 
             filter = new IntentFilter();
             filter.addAction(Intent.ACTION_BOOT_COMPLETED);
@@ -4920,6 +4912,12 @@ public final class PowerManagerService extends SystemService
         public String toString() {
             synchronized (this) {
                 return mName + ": ref count=" + mReferenceCount;
+            }
+        }
+
+        public int currentCount() {
+            synchronized (this) {
+                return mReferenceCount;
             }
         }
 
