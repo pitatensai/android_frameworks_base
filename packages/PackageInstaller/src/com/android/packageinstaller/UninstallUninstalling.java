@@ -41,7 +41,7 @@ import android.widget.Toast;
 /**
  * Start an uninstallation, show a dialog while uninstalling and return result to the caller.
  */
-public class UninstallUninstalling extends Activity implements
+public class UninstallUninstalling extends BaseActivity implements
         EventResultPersister.EventResultObserver {
     private static final String LOG_TAG = UninstallUninstalling.class.getSimpleName();
 

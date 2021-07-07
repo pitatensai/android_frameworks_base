@@ -42,6 +42,7 @@ import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.widget.Toast;
 
+import com.android.packageinstaller.BaseActivity;
 import com.android.packageinstaller.PackageUtil;
 import com.android.packageinstaller.R;
 
@@ -55,7 +56,7 @@ import java.util.List;
  * by an intent with the intent's class name explicitly set to UninstallAppProgress and expects
  * the application object of the application to uninstall.
  */
-public class UninstallAppProgress extends Activity {
+public class UninstallAppProgress extends BaseActivity {
     private static final String TAG = "UninstallAppProgress";
 
     private static final String FRAGMENT_TAG = "progress_fragment";

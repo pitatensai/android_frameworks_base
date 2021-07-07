@@ -70,7 +70,7 @@ import java.util.List;
  * Intent.ACTION_UNINSTALL_PKG_COMMAND and attribute
  * com.android.packageinstaller.PackageName set to the application package name
  */
-public class UninstallerActivity extends Activity {
+public class UninstallerActivity extends BaseActivity {
     private static final String TAG = "UninstallerActivity";
 
     private static final String UNINSTALLING_CHANNEL = "uninstalling";

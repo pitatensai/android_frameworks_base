@@ -45,7 +45,7 @@ import java.util.List;
  * Select which activity is the first visible activity of the installation and forward the intent to
  * it.
  */
-public class InstallStart extends Activity {
+public class InstallStart extends BaseActivity {
     private static final String LOG_TAG = InstallStart.class.getSimpleName();
 
     private static final String DOWNLOADS_AUTHORITY = "downloads";
