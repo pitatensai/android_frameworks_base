@@ -11,6 +11,7 @@ public class EinkSettingsDataBaseHelper extends SQLiteOpenHelper {
     public static final String APP_DPI = "app_dpi";
     public static final String IS_DPI_SETTING = "is_dpi_setting";
     public static final String IS_REFRESH_SETTING = "is_refresh_setting";
+    public static final String IS_CONTRAST_SETTING = "is_contrast_setting";
     public static final String REFRESH_MODE = "refresh_mode";
     public static final String REFRESH_FREQUENCY = "refresh_frequency";
     public static final String APP_CONTRAST = "app_contrast";
@@ -42,6 +43,7 @@ public class EinkSettingsDataBaseHelper extends SQLiteOpenHelper {
                 REFRESH_MODE + " integer default '7', " +
                 REFRESH_FREQUENCY + " integer default '20', " +
                 /** 对比度设置*/
+                IS_CONTRAST_SETTING + " integer default '0', " +
                 APP_CONTRAST + " integer default '0', " +
                 /** 动画过滤 */
                 APP_ANIM_FILTER + " integer default '0', " +

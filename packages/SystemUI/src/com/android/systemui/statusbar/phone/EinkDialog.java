@@ -31,7 +31,7 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
     private Button mRefreshButton;
     private SeekBar mDpiSeekbar, mAnimationSeekbar, mContrastSeekbar;
     private TextView mDpiText, mAnimationText, mContrastText;
-    private CheckBox mDpiCheckbox,mRefreshCheckbox;
+    private CheckBox mDpiCheckbox, mContrastCheckbox, mRefreshCheckbox;
     private CheckBox mAppBleachCheckbox;
     private Button mAppBleachSetButton;
     private static final int SET_DPI_TEXT = 0;
@@ -75,6 +75,9 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
                 case SET_DPI_SEEKBAR:
                     mDpiSeekbar.setEnabled(EinkSettingsProvider.isDpiSetting);
                     break;
+                case SET_CONTRAST_SEEKBAR:
+                    mContrastSeekbar.setEnabled(EinkSettingsProvider.isContrastSetting);
+                    break;
             }
         }
     };
@@ -106,9 +109,13 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
         //对比度设置
         mContrastText = (TextView) findViewById(R.id.eink_dialog_contrast_edit);
         mContrastText.setText(String.valueOf(EinkSettingsProvider.contrast));
+        mContrastCheckbox = (CheckBox) findViewById(R.id.eink_dialog_contrast_checkbox);
+        mContrastCheckbox.setOnCheckedChangeListener(this);
+        mContrastCheckbox.setChecked(EinkSettingsProvider.isContrastSetting);
         mContrastSeekbar = (SeekBar) findViewById(R.id.eink_dialog_contrast_seekbar);
         mContrastSeekbar.setOnSeekBarChangeListener(this);
         mContrastSeekbar.setProgress(EinkSettingsProvider.contrast);
+        mContrastSeekbar.setEnabled(mContrastCheckbox.isChecked());
         //刷新设置
         mRefreshCheckbox = (CheckBox) findViewById(R.id.eink_dialog_refresh_checkbox);
         mRefreshCheckbox.setChecked(EinkSettingsProvider.isRefreshSetting);
@@ -262,6 +269,28 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
             Message setDPISeekbarMessage = new Message();
             setDPISeekbarMessage.what = SET_DPI_SEEKBAR;
             EinkDialogHandler.sendMessage(setDPISeekbarMessage);
+        } else if(id == R.id.eink_dialog_contrast_checkbox) {
+            EinkSettingsProvider.isContrastSetting = isChecked;
+            ContentValues values = new ContentValues();
+            values.put(EinkSettingsDataBaseHelper.IS_CONTRAST_SETTING,
+                    EinkSettingsProvider.isContrastSetting?1:0);
+            mContext.getContentResolver().update(EinkSettingsProvider.URI_EINK_SETTINGS,
+                    values, EinkSettingsDataBaseHelper.PACKAGE_NAME + " = ?",
+                    new String[]{EinkSettingsProvider.packageName});
+            if(EinkSettingsProvider.isContrastSetting) {
+                if(EinkSettingsProvider.contrast == 0) {
+                    mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_CONTRAST, EinkSettingsProvider.INIT_PROGRASS_CONTRAST);
+                } else {
+                    EinkSettingsProvider.strContrast = mEinkSettingsManager.convertArrayToString(
+                            mEinkSettingsManager.convertLevelToArray(EinkSettingsProvider.contrast));
+                    mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_CONTRAST, EinkSettingsProvider.strContrast);
+                }
+            } else {
+                mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_CONTRAST, EinkSettingsProvider.SYS_CONTRAST);
+            }
+            Message setContrastSeekbarMessage = new Message();
+            setContrastSeekbarMessage.what = SET_CONTRAST_SEEKBAR;
+            EinkDialogHandler.sendMessage(setContrastSeekbarMessage);
         }
     }
 

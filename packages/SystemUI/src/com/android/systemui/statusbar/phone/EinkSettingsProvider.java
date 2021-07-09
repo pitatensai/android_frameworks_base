@@ -24,7 +24,7 @@ public class EinkSettingsProvider extends ContentProvider {
     public static final int EINKSETTINGS = 0;
     public static final int EINKSETTINGS_UPDATE = 1;
     public static final int INIT_PROGRASS_REFRESH_FREQUENCY = 20;
-    public static final String INIT_PROGRASS_CONTRAST = "0xffccba9876543000";
+    public static final String INIT_PROGRASS_CONTRAST = "0xfedcba9876543210";
     public static final String INIT_DPI_PROPERTY = "ro.sf.lcd_density";
     private static final String COMMON_REFRESH_MODE = "7";
     private static final String AUTO_REFRESH_MODE = "0";
@@ -32,6 +32,7 @@ public class EinkSettingsProvider extends ContentProvider {
     public static String packageName = "";
     public static final String EINK_REFRESH_FREQUENCY = "persist.vendor.fullmode_cnt";
     public static final String EINK_CONTRAST = "persist.vendor.hwc.contrast_key";
+    public static final String Eink_SYS_CONTRAST = "persist.sys.contrast_key";
     public static final String AUTHORITY = "com.android.systemui.eink";
     public static final String EINKSETTINGS_TABLE = "EinkSettings";
     public static final Uri URI_EINK_SETTINGS = Uri.parse("content://com.android.systemui.eink/einksettings");
@@ -40,8 +41,10 @@ public class EinkSettingsProvider extends ContentProvider {
     public static int refreshFrequency;
     public static int contrast;
     public static String strContrast;
+    public static String SYS_CONTRAST;
     public static String refreshMode;
     public static boolean isDpiSetting;
+    public static boolean isContrastSetting;
     public static boolean isRefreshSetting;
     public static int mAppAnimFilter;//动画过滤
     public static boolean mIsAppBleach;//是否启用应用漂白
@@ -63,6 +66,7 @@ public class EinkSettingsProvider extends ContentProvider {
     public EinkSettingsProvider() {
         try {
             INIT_PROGRASS_DPI = Integer.parseInt(EinkSettingsManager.getProperty(INIT_DPI_PROPERTY));
+            SYS_CONTRAST = EinkSettingsManager.getProperty(Eink_SYS_CONTRAST);
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
@@ -114,6 +118,8 @@ public class EinkSettingsProvider extends ContentProvider {
                         //对比度设置
                         contrast = cursor.getInt(cursor.getColumnIndex(
                                 EinkSettingsDataBaseHelper.APP_CONTRAST));
+                        isContrastSetting = 1 == cursor.getInt(cursor.getColumnIndex(
+                                EinkSettingsDataBaseHelper.IS_CONTRAST_SETTING));
                         //动画过滤
                         mAppAnimFilter = cursor.getInt(cursor.getColumnIndex(
                                 EinkSettingsDataBaseHelper.APP_ANIM_FILTER));
@@ -132,6 +138,7 @@ public class EinkSettingsProvider extends ContentProvider {
                 } else {
                     DPI = INIT_PROGRASS_DPI;
                     isDpiSetting = false;
+                    isContrastSetting = false;
                     contrast = 0;
                     isRefreshSetting = false;
                     refreshMode = COMMON_REFRESH_MODE;
@@ -143,11 +150,17 @@ public class EinkSettingsProvider extends ContentProvider {
                     mAppBleachCoverColor = 0;
                     mAppBleachBgColor = 0;
                 }
-                if(contrast == 0) {
-                    mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_CONTRAST, INIT_PROGRASS_CONTRAST);
+                if(isContrastSetting) {
+                    //对比度数值为0时，使用0xfedcba9876543210
+                    if(contrast == 0) {
+                        mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_CONTRAST, INIT_PROGRASS_CONTRAST);
+                    } else {
+                        strContrast = mEinkSettingsManager.convertArrayToString(mEinkSettingsManager.convertLevelToArray(contrast));
+                        mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_CONTRAST, strContrast);
+                    }
                 } else {
-                    strContrast = mEinkSettingsManager.convertArrayToString(mEinkSettingsManager.convertLevelToArray(contrast));
-                    mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_CONTRAST, strContrast);
+                    //未开启对比度开关时，使用系统对比度0xffccba9876543000
+                    mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_CONTRAST, SYS_CONTRAST);
                 }
                 //刷新设置开启下才设置
                 if(isRefreshSetting) {
