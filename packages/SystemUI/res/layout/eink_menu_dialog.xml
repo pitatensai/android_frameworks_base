@@ -48,8 +48,8 @@
             android:layout_height="wrap_content"
             android:maxHeight="2dp"
             android:max="240"
-            android:layout_marginLeft="30dp"
-            android:layout_toRightOf="@id/eink_dialog_dpi_edit"/>
+            android:layout_marginRight="30dp"
+            android:layout_alignParentRight="true"/>
         <CheckBox
             android:id="@+id/eink_dialog_dpi_checkbox"
             android:layout_width="30dp"
@@ -125,7 +125,13 @@
             android:layout_height="wrap_content"
             android:maxHeight="2dp"
             android:max="80"
+            android:layout_marginRight="30dp"
             android:layout_alignParentRight="true" />
+        <CheckBox
+            android:id="@+id/eink_dialog_contrast_checkbox"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignParentRight="true"/>
     </RelativeLayout>
 
     <RelativeLayout
