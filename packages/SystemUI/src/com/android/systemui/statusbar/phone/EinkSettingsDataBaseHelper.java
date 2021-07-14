@@ -7,6 +7,8 @@ import android.util.Log;
 
 public class EinkSettingsDataBaseHelper extends SQLiteOpenHelper {
     private static final String TAG = "EinkSettingsDataBaseHel";
+    public static final int INIT_REFRESH_MODE = 7;
+    public static final int INIT_REFRESH_FREQUENCY = 20;
     public static final String PACKAGE_NAME = "package_name";
     public static final String APP_DPI = "app_dpi";
     public static final String IS_DPI_SETTING = "is_dpi_setting";
@@ -23,25 +25,22 @@ public class EinkSettingsDataBaseHelper extends SQLiteOpenHelper {
     public static final String APP_BLEACH_BG_COLOR = "app_bleach_bg_color";//背景颜色
 
     public EinkSettingsDataBaseHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
-        super(context, name, factory, version);
-        Log.d(TAG, "EinkSettingsDataBaseHelper: ");
+        super(context, name, factory, 2);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
         Log.d(TAG, "onCreate: ");
-        int initDpi = Integer.parseInt(EinkSettingsManager.getProperty(
-                EinkSettingsProvider.INIT_DPI_PROPERTY));
         final String CREATE_EINKSETTINGS = "create table EinkSettings (" +
                 "id integer primary key autoincrement, " +
                 PACKAGE_NAME + " text, " +
                 /** DPI设置*/
-                APP_DPI + " integer default '" + initDpi +"', " +
+                APP_DPI + " integer default '-1', " +
                 IS_DPI_SETTING + " integer default '0', " +
                 /** 刷新设置*/
                 IS_REFRESH_SETTING + " integer default '0', " +
-                REFRESH_MODE + " integer default '7', " +
-                REFRESH_FREQUENCY + " integer default '20', " +
+                REFRESH_MODE + " integer default '-1', " +
+                REFRESH_FREQUENCY + " integer default '-1', " +
                 /** 对比度设置*/
                 IS_CONTRAST_SETTING + " integer default '0', " +
                 APP_CONTRAST + " integer default '0', " +
@@ -59,6 +58,11 @@ public class EinkSettingsDataBaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        Log.d(TAG, "onUpgrade: ");
+        if(oldVersion < 2) {
+            final String UPDATE_EINKSETTINGS = "alter table EinkSettings add column " +
+                    IS_CONTRAST_SETTING + " integer default '0' ";
+            db.execSQL(UPDATE_EINKSETTINGS);
+            oldVersion = 2;
+        }
     }
 }

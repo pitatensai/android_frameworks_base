@@ -23,12 +23,8 @@ public class EinkSettingsProvider extends ContentProvider {
     private static final String TAG = "EinkSettingsProvider";
     public static final int EINKSETTINGS = 0;
     public static final int EINKSETTINGS_UPDATE = 1;
-    public static final int INIT_PROGRASS_REFRESH_FREQUENCY = 20;
     public static final String INIT_PROGRASS_CONTRAST = "0xfedcba9876543210";
     public static final String INIT_DPI_PROPERTY = "ro.sf.lcd_density";
-    private static final String COMMON_REFRESH_MODE = "7";
-    private static final String AUTO_REFRESH_MODE = "0";
-    private static final String A2_REFRESH_MODE = "12";
     public static String packageName = "";
     public static final String EINK_REFRESH_FREQUENCY = "persist.vendor.fullmode_cnt";
     public static final String EINK_CONTRAST = "persist.vendor.hwc.contrast_key";
@@ -38,11 +34,11 @@ public class EinkSettingsProvider extends ContentProvider {
     public static final Uri URI_EINK_SETTINGS = Uri.parse("content://com.android.systemui.eink/einksettings");
     public static int INIT_PROGRASS_DPI;
     public static int DPI;
+    public static int refreshMode;
     public static int refreshFrequency;
     public static int contrast;
     public static String strContrast;
     public static String SYS_CONTRAST;
-    public static String refreshMode;
     public static boolean isDpiSetting;
     public static boolean isContrastSetting;
     public static boolean isRefreshSetting;
@@ -104,17 +100,22 @@ public class EinkSettingsProvider extends ContentProvider {
                     Log.d(TAG, "cursor.getCount() > 0 DPI: " + DPI);
                     if(cursor.moveToFirst()) {
                         //DPI设置
-                        DPI = cursor.getInt(cursor.getColumnIndex(
+                        int dpiFromDB = cursor.getInt(cursor.getColumnIndex(
                                 EinkSettingsDataBaseHelper.APP_DPI));
+                        DPI = dpiFromDB == -1 ? INIT_PROGRASS_DPI : dpiFromDB;
                         isDpiSetting = 1 == cursor.getInt(cursor.getColumnIndex(
                                 EinkSettingsDataBaseHelper.IS_DPI_SETTING));
                         //刷新设置
                         isRefreshSetting = 1 == cursor.getInt(cursor.getColumnIndex(
                                 EinkSettingsDataBaseHelper.IS_REFRESH_SETTING));
-                        refreshMode = cursor.getString(cursor.getColumnIndex(
+                        int refreshModeFromDB =cursor.getInt(cursor.getColumnIndex(
                                 EinkSettingsDataBaseHelper.REFRESH_MODE));
-                        refreshFrequency = cursor.getInt(cursor.getColumnIndex(
+                        refreshMode = refreshModeFromDB == -1 ?
+                                EinkSettingsDataBaseHelper.INIT_REFRESH_MODE : refreshModeFromDB;
+                        int refreshFrequencyFromDB = cursor.getInt(cursor.getColumnIndex(
                                 EinkSettingsDataBaseHelper.REFRESH_FREQUENCY));
+                        refreshFrequency =  refreshFrequencyFromDB == -1 ?
+                                EinkSettingsDataBaseHelper.INIT_REFRESH_FREQUENCY : refreshFrequencyFromDB;
                         //对比度设置
                         contrast = cursor.getInt(cursor.getColumnIndex(
                                 EinkSettingsDataBaseHelper.APP_CONTRAST));
@@ -141,8 +142,8 @@ public class EinkSettingsProvider extends ContentProvider {
                     isContrastSetting = false;
                     contrast = 0;
                     isRefreshSetting = false;
-                    refreshMode = COMMON_REFRESH_MODE;
-                    refreshFrequency = 20;
+                    refreshMode = EinkSettingsDataBaseHelper.INIT_REFRESH_MODE;
+                    refreshFrequency = EinkSettingsDataBaseHelper.INIT_REFRESH_FREQUENCY;
                     mAppAnimFilter = 0;
                     mIsAppBleach = false;
                     mIsAppBleachTextPlus = false;
@@ -164,12 +165,12 @@ public class EinkSettingsProvider extends ContentProvider {
                 }
                 //刷新设置开启下才设置
                 if(isRefreshSetting) {
-                    mEinkSettingsManager.setEinkMode(refreshMode);
+                    mEinkSettingsManager.setEinkMode(String.valueOf(refreshMode));
                     mEinkSettingsManager.setProperty(EINK_REFRESH_FREQUENCY, String.valueOf(refreshFrequency));
                 } else {
-                    mEinkSettingsManager.setEinkMode(EinkManager.EinkMode.EPD_PART_GC16);
+                    mEinkSettingsManager.setEinkMode(String.valueOf(EinkSettingsDataBaseHelper.INIT_REFRESH_MODE));
                     mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_REFRESH_FREQUENCY,
-                            String.valueOf(EinkSettingsProvider.INIT_PROGRASS_REFRESH_FREQUENCY));
+                            String.valueOf(EinkSettingsDataBaseHelper.INIT_REFRESH_FREQUENCY));
                 }
                 ContentResolver contentResolver = getContext().getContentResolver();
                 if (mIsAppBleach && mIsAppBleachTextPlus) {
