@@ -39,7 +39,7 @@ public class EinkRefreshDialog extends EinkBaseDialog implements View.OnClickLis
                     mRefreshFrequencySeekbar.setProgress(EinkSettingsProvider.refreshFrequency);
                     break;
                 case SET_REFRESH_MODE_BUTTON:
-                    switch (EinkSettingsProvider.refreshMode) {
+                    switch (String.valueOf(EinkSettingsProvider.refreshMode)) {
                         case EinkManager.EinkMode.EPD_PART_GC16:
                             mCommonButton.setBackgroundColor(Color.LTGRAY);
                             mAutoButton.setBackgroundColor(Color.WHITE);
@@ -101,7 +101,7 @@ public class EinkRefreshDialog extends EinkBaseDialog implements View.OnClickLis
             String curMode = mEinkSettingsManager.getEinkMode();
             if(!EinkManager.EinkMode.EPD_PART_GC16.equals(curMode)){
                 //更新refreshMode
-                EinkSettingsProvider.refreshMode = EinkManager.EinkMode.EPD_PART_GC16;
+                EinkSettingsProvider.refreshMode = Integer.valueOf(EinkManager.EinkMode.EPD_PART_GC16);
                 setRefreshUIandMode();
             } else {
                 Log.d(TAG, "curMode: " + curMode);
@@ -109,7 +109,7 @@ public class EinkRefreshDialog extends EinkBaseDialog implements View.OnClickLis
         } else if(id == R.id.eink_refresh_dialog_mode_auto_button) {
             String curMode = mEinkSettingsManager.getEinkMode();
             if(!EinkManager.EinkMode.EPD_AUTO.equals(curMode)){
-                EinkSettingsProvider.refreshMode = EinkManager.EinkMode.EPD_AUTO;
+                EinkSettingsProvider.refreshMode = Integer.valueOf(EinkManager.EinkMode.EPD_AUTO);
                 setRefreshUIandMode();
             } else {
                 Log.d(TAG, "curMode: " + curMode);
@@ -117,7 +117,7 @@ public class EinkRefreshDialog extends EinkBaseDialog implements View.OnClickLis
         } else if(id == R.id.eink_refresh_dialog_mode_a2_button) {
             String curMode = mEinkSettingsManager.getEinkMode();
             if(!EinkManager.EinkMode.EPD_A2.equals(curMode)){
-                EinkSettingsProvider.refreshMode = EinkManager.EinkMode.EPD_A2;
+                EinkSettingsProvider.refreshMode = Integer.valueOf(EinkManager.EinkMode.EPD_A2);
                 setRefreshUIandMode();
             } else {
                 Log.d(TAG, "curMode: " + curMode);
@@ -171,7 +171,7 @@ public class EinkRefreshDialog extends EinkBaseDialog implements View.OnClickLis
         setRefreshModeButtonMessage.what = SET_REFRESH_MODE_BUTTON;
         EinkRefreshDialogHandler.sendMessage(setRefreshModeButtonMessage);
         //设置刷新模式
-        mEinkSettingsManager.setEinkMode(EinkSettingsProvider.refreshMode);
+        mEinkSettingsManager.setEinkMode(String.valueOf(EinkSettingsProvider.refreshMode));
         mEinkSettingsManager.refreshAll();
     }
 }

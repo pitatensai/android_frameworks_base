@@ -219,13 +219,13 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
                     values, EinkSettingsDataBaseHelper.PACKAGE_NAME + " = ?",
                     new String[]{EinkSettingsProvider.packageName});
             if(EinkSettingsProvider.isRefreshSetting) {
-                mEinkSettingsManager.setEinkMode(EinkSettingsProvider.refreshMode);
+                mEinkSettingsManager.setEinkMode(String.valueOf(EinkSettingsProvider.refreshMode));
                 mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_REFRESH_FREQUENCY,
                         String.valueOf(EinkSettingsProvider.refreshFrequency));
             } else {
-                mEinkSettingsManager.setEinkMode(EinkManager.EinkMode.EPD_PART_GC16);
+                mEinkSettingsManager.setEinkMode(String.valueOf(EinkSettingsDataBaseHelper.INIT_REFRESH_MODE));
                 mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_REFRESH_FREQUENCY,
-                        String.valueOf(EinkSettingsProvider.INIT_PROGRASS_REFRESH_FREQUENCY));
+                        String.valueOf(EinkSettingsDataBaseHelper.INIT_REFRESH_FREQUENCY));
             }
             mRefreshButton.setEnabled(isChecked);
         } else if (id == R.id.eink_dialog_bleach_checkbox) {
@@ -256,16 +256,8 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
             mContext.getContentResolver().update(EinkSettingsProvider.URI_EINK_SETTINGS,
                     values, EinkSettingsDataBaseHelper.PACKAGE_NAME + " = ?",
                     new String[]{EinkSettingsProvider.packageName});
-            if(EinkSettingsProvider.isDpiSetting) {
-                mEinkSettingsManager.setAppDPI(mContext);
-            } else {
-                values = new ContentValues();
-                values.put(EinkSettingsDataBaseHelper.APP_DPI, EinkSettingsProvider.INIT_PROGRASS_DPI);
-                mContext.getContentResolver().update(EinkSettingsProvider.URI_EINK_SETTINGS,
-                        values, EinkSettingsDataBaseHelper.PACKAGE_NAME + " = ?",
-                        new String[]{EinkSettingsProvider.packageName});
-                mEinkSettingsManager.setAppDPI(mContext);
-            }
+            //修改APP DPI
+            mEinkSettingsManager.setAppDPI(mContext);
             Message setDPISeekbarMessage = new Message();
             setDPISeekbarMessage.what = SET_DPI_SEEKBAR;
             EinkDialogHandler.sendMessage(setDPISeekbarMessage);
