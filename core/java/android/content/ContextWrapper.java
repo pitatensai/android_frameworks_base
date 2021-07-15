@@ -88,12 +88,15 @@ public class ContextWrapper extends Context {
         }
     }
 
-    private Context updateResources(Context context, String packageName) {
-        int densityDpi = SystemProperties.getInt("ro.sf.lcd_density", -1);
-        int isDpiSetting = 0;
-        if (null == packageName || -1 == densityDpi) {
-            return context;
+    /** @hide */
+    public int getCurrentStoreDpi(Context context, String packageName) {
+        if (null == packageName
+            || "com.android.systemui".equals(packageName)
+            || "com.rockchip.notedemo".equals(packageName)
+            || "com.android.launcher3".equals(packageName)) {
+            return -1;
         }
+        int densityDpi = SystemProperties.getInt("ro.sf.lcd_density", -1);
         Uri URI_EINK_SETTINGS = Uri.parse("content://com.android.systemui.eink/einksettings");
         Cursor cursor = null;
         try {
@@ -102,8 +105,8 @@ public class ContextWrapper extends Context {
             if(null != cursor) {
                 if(cursor.getCount() > 0) {
                     if(cursor.moveToFirst()) {
-                        isDpiSetting = cursor.getInt(cursor.getColumnIndex("is_dpi_setting"));
-                        if(isDpiSetting == 1) {
+                        int isDpiSetting = cursor.getInt(cursor.getColumnIndex("is_dpi_setting"));
+                        if (isDpiSetting == 1) {
                             int densityDpiFromDB = cursor.getInt(cursor.getColumnIndex("app_dpi"));
                             densityDpi = densityDpiFromDB == -1 ? densityDpi : densityDpiFromDB;
                         }
@@ -111,11 +114,19 @@ public class ContextWrapper extends Context {
                 }
             }
         } catch (Exception e) {
-            return context;
         } finally {
             if (null != cursor) {
                 cursor.close();
             }
+        }
+        return densityDpi;
+    }
+
+
+    private Context updateResources(Context context, String packageName) {
+        int densityDpi = getCurrentStoreDpi(context, packageName);
+        if (-1 == densityDpi) {
+            return context;
         }
 
         Resources resources = context.getResources();

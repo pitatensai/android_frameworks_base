@@ -226,6 +226,7 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     private ActivityManager mActivityManager;
 
     private final String[] BLACK_EINK_CONFIG_APP = new String[] {
+            "com.android.systemui",
             "com.android.launcher3",
             "com.rockchip.notedemo",
     };
