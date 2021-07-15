@@ -1106,9 +1106,12 @@
     <string name="eink_contrast_setting">对比度设置</string>
     <string name="eink_refresh_setting">刷新设置</string>
     <string name="eink_refresh_mode">刷新模式</string>
-    <string name="eink_common_mode">普通模式</string>
-    <string name="eink_auto_mode">auto模式</string>
-    <string name="eink_a2_mode">A2模式</string>
+    <string name="eink_common_mode">普通</string>
+    <string name="eink_auto_mode">auto</string>
+    <string name="eink_a2_mode">A2</string>
+    <string name="eink_a2_dither_mode">A2 Dither</string>
+    <string name="eink_du_mode">DU</string>
+    <string name="eink_du_4_mode">DU4</string>
     <string name="eink_refresh_frequency">全刷频率</string>
     <string name="eink_app_bleach">应用漂白</string>
     <string name="eink_app_bleach_text_plus">"文字增强"</string>

@@ -111,7 +111,7 @@ public class EinkSettingsProvider extends ContentProvider {
                         int refreshModeFromDB =cursor.getInt(cursor.getColumnIndex(
                                 EinkSettingsDataBaseHelper.REFRESH_MODE));
                         refreshMode = refreshModeFromDB == -1 ?
-                                EinkSettingsDataBaseHelper.INIT_REFRESH_MODE : refreshModeFromDB;
+                                Integer.valueOf(EinkManager.EinkMode.EPD_PART_GC16) : refreshModeFromDB;
                         int refreshFrequencyFromDB = cursor.getInt(cursor.getColumnIndex(
                                 EinkSettingsDataBaseHelper.REFRESH_FREQUENCY));
                         refreshFrequency =  refreshFrequencyFromDB == -1 ?
@@ -142,7 +142,7 @@ public class EinkSettingsProvider extends ContentProvider {
                     isContrastSetting = false;
                     contrast = 0;
                     isRefreshSetting = false;
-                    refreshMode = EinkSettingsDataBaseHelper.INIT_REFRESH_MODE;
+                    refreshMode = Integer.valueOf(EinkManager.EinkMode.EPD_PART_GC16);
                     refreshFrequency = EinkSettingsDataBaseHelper.INIT_REFRESH_FREQUENCY;
                     mAppAnimFilter = 0;
                     mIsAppBleach = false;
@@ -168,7 +168,7 @@ public class EinkSettingsProvider extends ContentProvider {
                     mEinkSettingsManager.setEinkMode(String.valueOf(refreshMode));
                     mEinkSettingsManager.setProperty(EINK_REFRESH_FREQUENCY, String.valueOf(refreshFrequency));
                 } else {
-                    mEinkSettingsManager.setEinkMode(String.valueOf(EinkSettingsDataBaseHelper.INIT_REFRESH_MODE));
+                    mEinkSettingsManager.setEinkMode(String.valueOf(EinkManager.EinkMode.EPD_PART_GC16));
                     mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_REFRESH_FREQUENCY,
                             String.valueOf(EinkSettingsDataBaseHelper.INIT_REFRESH_FREQUENCY));
                 }

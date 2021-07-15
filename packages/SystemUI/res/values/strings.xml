@@ -2890,9 +2890,12 @@
     <string name="eink_contrast_setting">Contrast Setting</string>
     <string name="eink_refresh_setting">Refresh Setting</string>
     <string name="eink_refresh_mode">Refresh Mode</string>
-    <string name="eink_common_mode">Common Mode</string>
-    <string name="eink_auto_mode">Auto Mode</string>
-    <string name="eink_a2_mode">A2 Mode</string>
+    <string name="eink_common_mode">Common</string>
+    <string name="eink_auto_mode">Auto</string>
+    <string name="eink_a2_mode">A2</string>
+    <string name="eink_a2_dither_mode">A2 Dither</string>
+    <string name="eink_du_mode">DU</string>
+    <string name="eink_du_4_mode">DU4</string>
     <string name="eink_refresh_frequency">Refresh Frequency</string>
     <string name="eink_app_bleach">App Bleach</string>
     <string name="eink_app_bleach_text_plus">Text Plus</string>

@@ -223,7 +223,7 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
                 mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_REFRESH_FREQUENCY,
                         String.valueOf(EinkSettingsProvider.refreshFrequency));
             } else {
-                mEinkSettingsManager.setEinkMode(String.valueOf(EinkSettingsDataBaseHelper.INIT_REFRESH_MODE));
+                mEinkSettingsManager.setEinkMode(String.valueOf(EinkManager.EinkMode.EPD_PART_GC16));
                 mEinkSettingsManager.setProperty(EinkSettingsProvider.EINK_REFRESH_FREQUENCY,
                         String.valueOf(EinkSettingsDataBaseHelper.INIT_REFRESH_FREQUENCY));
             }
