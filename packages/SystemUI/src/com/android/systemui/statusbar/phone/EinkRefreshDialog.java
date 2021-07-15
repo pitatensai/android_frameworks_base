@@ -20,7 +20,7 @@ import com.android.systemui.R;
 public class EinkRefreshDialog extends EinkBaseDialog implements View.OnClickListener, SeekBar.OnSeekBarChangeListener{
     private static final String TAG = "EinkRefreshDialog";
     private Context mContext;
-    private Button mCommonButton,mAutoButton,mA2Button;
+    private Button mCommonButton, mAutoButton, mA2Button, mA2DitherButton, mDuButton, mDu4Button;
     private SeekBar mRefreshFrequencySeekbar;
     private TextView mRefreshFrequencyText;
     private EinkSettingsManager mEinkSettingsManager;
@@ -44,16 +44,49 @@ public class EinkRefreshDialog extends EinkBaseDialog implements View.OnClickLis
                             mCommonButton.setBackgroundColor(Color.LTGRAY);
                             mAutoButton.setBackgroundColor(Color.WHITE);
                             mA2Button.setBackgroundColor(Color.WHITE);
+                            mA2DitherButton.setBackgroundColor(Color.WHITE);
+                            mDuButton.setBackgroundColor(Color.WHITE);
+                            mDu4Button.setBackgroundColor(Color.WHITE);
                             break;
                         case EinkManager.EinkMode.EPD_AUTO:
                             mCommonButton.setBackgroundColor(Color.WHITE);
                             mAutoButton.setBackgroundColor(Color.LTGRAY);
                             mA2Button.setBackgroundColor(Color.WHITE);
+                            mA2DitherButton.setBackgroundColor(Color.WHITE);
+                            mDuButton.setBackgroundColor(Color.WHITE);
+                            mDu4Button.setBackgroundColor(Color.WHITE);
                             break;
                         case EinkManager.EinkMode.EPD_A2:
                             mCommonButton.setBackgroundColor(Color.WHITE);
                             mAutoButton.setBackgroundColor(Color.WHITE);
                             mA2Button.setBackgroundColor(Color.LTGRAY);
+                            mA2DitherButton.setBackgroundColor(Color.WHITE);
+                            mDuButton.setBackgroundColor(Color.WHITE);
+                            mDu4Button.setBackgroundColor(Color.WHITE);
+                            break;
+                        case EinkManager.EinkMode.EPD_A2_DITHER:
+                            mCommonButton.setBackgroundColor(Color.WHITE);
+                            mAutoButton.setBackgroundColor(Color.WHITE);
+                            mA2Button.setBackgroundColor(Color.WHITE);
+                            mA2DitherButton.setBackgroundColor(Color.LTGRAY);
+                            mDuButton.setBackgroundColor(Color.WHITE);
+                            mDu4Button.setBackgroundColor(Color.WHITE);
+                            break;
+                        case EinkManager.EinkMode.EPD_DU:
+                            mCommonButton.setBackgroundColor(Color.WHITE);
+                            mAutoButton.setBackgroundColor(Color.WHITE);
+                            mA2Button.setBackgroundColor(Color.WHITE);
+                            mA2DitherButton.setBackgroundColor(Color.WHITE);
+                            mDuButton.setBackgroundColor(Color.LTGRAY);
+                            mDu4Button.setBackgroundColor(Color.WHITE);
+                            break;
+                        case EinkManager.EinkMode.EPD_DU4:
+                            mCommonButton.setBackgroundColor(Color.WHITE);
+                            mAutoButton.setBackgroundColor(Color.WHITE);
+                            mA2Button.setBackgroundColor(Color.WHITE);
+                            mA2DitherButton.setBackgroundColor(Color.WHITE);
+                            mDuButton.setBackgroundColor(Color.WHITE);
+                            mDu4Button.setBackgroundColor(Color.LTGRAY);
                             break;
                     }
                     break;
@@ -73,6 +106,9 @@ public class EinkRefreshDialog extends EinkBaseDialog implements View.OnClickLis
         mCommonButton = (Button) findViewById(R.id.eink_refresh_dialog_mode_common_button);
         mAutoButton = (Button) findViewById(R.id.eink_refresh_dialog_mode_auto_button);
         mA2Button = (Button) findViewById(R.id.eink_refresh_dialog_mode_a2_button);
+        mA2DitherButton = (Button) findViewById(R.id.eink_refresh_dialog_mode_a2_dither_button);
+        mDuButton = (Button) findViewById(R.id.eink_refresh_dialog_mode_du_button);
+        mDu4Button = (Button) findViewById(R.id.eink_refresh_dialog_mode_du_4_button);
         mRefreshFrequencySeekbar = (SeekBar) findViewById(R.id.eink_refresh_dialog_frequency_seekbar);
         mRefreshFrequencyText = (TextView) findViewById(R.id.eink_refresh_dialog_frequency_text);
         if(mEinkSettingsManager == null) {
@@ -91,6 +127,9 @@ public class EinkRefreshDialog extends EinkBaseDialog implements View.OnClickLis
         mCommonButton.setOnClickListener(this);
         mAutoButton.setOnClickListener(this);
         mA2Button.setOnClickListener(this);
+        mA2DitherButton.setOnClickListener(this);
+        mDuButton.setOnClickListener(this);
+        mDu4Button.setOnClickListener(this);
     }
 
     @Override
@@ -118,6 +157,31 @@ public class EinkRefreshDialog extends EinkBaseDialog implements View.OnClickLis
             String curMode = mEinkSettingsManager.getEinkMode();
             if(!EinkManager.EinkMode.EPD_A2.equals(curMode)){
                 EinkSettingsProvider.refreshMode = Integer.valueOf(EinkManager.EinkMode.EPD_A2);
+                setRefreshUIandMode();
+            } else {
+                Log.d(TAG, "curMode: " + curMode);
+            }
+        } else if(id == R.id.eink_refresh_dialog_mode_a2_dither_button) {
+            String curMode = mEinkSettingsManager.getEinkMode();
+            if(!EinkManager.EinkMode.EPD_A2_DITHER.equals(curMode)){
+                //更新refreshMode
+                EinkSettingsProvider.refreshMode = Integer.valueOf(EinkManager.EinkMode.EPD_A2_DITHER);
+                setRefreshUIandMode();
+            } else {
+                Log.d(TAG, "curMode: " + curMode);
+            }
+        } else if(id == R.id.eink_refresh_dialog_mode_du_button) {
+            String curMode = mEinkSettingsManager.getEinkMode();
+            if(!EinkManager.EinkMode.EPD_DU.equals(curMode)){
+                EinkSettingsProvider.refreshMode = Integer.valueOf(EinkManager.EinkMode.EPD_DU);
+                setRefreshUIandMode();
+            } else {
+                Log.d(TAG, "curMode: " + curMode);
+            }
+        } else if(id == R.id.eink_refresh_dialog_mode_du_4_button) {
+            String curMode = mEinkSettingsManager.getEinkMode();
+            if(!EinkManager.EinkMode.EPD_DU4.equals(curMode)){
+                EinkSettingsProvider.refreshMode = Integer.valueOf(EinkManager.EinkMode.EPD_DU4);
                 setRefreshUIandMode();
             } else {
                 Log.d(TAG, "curMode: " + curMode);

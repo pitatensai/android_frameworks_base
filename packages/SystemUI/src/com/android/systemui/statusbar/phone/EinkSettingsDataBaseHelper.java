@@ -7,7 +7,6 @@ import android.util.Log;
 
 public class EinkSettingsDataBaseHelper extends SQLiteOpenHelper {
     private static final String TAG = "EinkSettingsDataBaseHel";
-    public static final int INIT_REFRESH_MODE = 7;
     public static final int INIT_REFRESH_FREQUENCY = 20;
     public static final String PACKAGE_NAME = "package_name";
     public static final String APP_DPI = "app_dpi";
@@ -26,6 +25,7 @@ public class EinkSettingsDataBaseHelper extends SQLiteOpenHelper {
 
     public EinkSettingsDataBaseHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
         super(context, name, factory, 2);
+        Log.d(TAG, "EinkSettingsDataBaseHelper version: " + version);
     }
 
     @Override
@@ -58,6 +58,7 @@ public class EinkSettingsDataBaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        Log.d(TAG, "onUpgrade  oldVersion:" + oldVersion + "newVersion:" + newVersion);
         if(oldVersion < 2) {
             final String UPDATE_EINKSETTINGS = "alter table EinkSettings add column " +
                     IS_CONTRAST_SETTING + " integer default '0' ";

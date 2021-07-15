@@ -22,8 +22,8 @@
             android:layout_height="wrap_content"
             android:id="@+id/eink_refresh_dialog_mode_layout"
             android:layout_below="@+id/eink_refresh_dialog_title_text"
-            android:layout_marginLeft="20dp"
-            android:layout_marginRight="20dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
             android:layout_marginTop="20dp">
             <TextView
                 android:background="#ffffff"
@@ -49,27 +49,58 @@
                 android:text="@string/eink_common_mode"
                 android:layout_width="50dp"
                 android:layout_height="30dp"
-                android:layout_toLeftOf="@+id/eink_refresh_dialog_mode_auto_button"
-                android:layout_marginRight="20dp" />
+                android:layout_toRightOf="@+id/eink_refresh_dialog_mode_text"
+                android:layout_marginLeft="10dp" />
             <Button
                 android:background="@null"
                 android:id="@+id/eink_refresh_dialog_mode_auto_button"
                 android:textColor="#000000"
                 android:textSize="10sp"
                 android:text="@string/eink_auto_mode"
-                android:layout_width="50dp"
+                android:layout_width="35dp"
                 android:layout_height="30dp"
-                android:layout_toLeftOf="@+id/eink_refresh_dialog_mode_a2_button"
-                android:layout_marginRight="10dp" />
+                android:layout_toRightOf="@+id/eink_refresh_dialog_mode_common_button"
+                android:layout_marginLeft="5dp" />
             <Button
                 android:background="@null"
                 android:id="@+id/eink_refresh_dialog_mode_a2_button"
                 android:textColor="#000000"
                 android:textSize="10sp"
                 android:text="@string/eink_a2_mode"
-                android:layout_width="50dp"
+                android:layout_width="30dp"
                 android:layout_height="30dp"
-                android:layout_alignParentRight="true" />
+                android:layout_toRightOf="@+id/eink_refresh_dialog_mode_auto_button"
+                android:layout_marginLeft="5dp" />
+            <Button
+                android:background="@null"
+                android:id="@+id/eink_refresh_dialog_mode_a2_dither_button"
+                android:textColor="#000000"
+                android:textSize="10sp"
+                android:text="@string/eink_a2_dither_mode"
+                android:layout_width="60dp"
+                android:layout_height="30dp"
+                android:layout_toRightOf="@+id/eink_refresh_dialog_mode_a2_button"
+                android:layout_marginLeft="5dp" />
+            <Button
+                android:background="@null"
+                android:id="@+id/eink_refresh_dialog_mode_du_button"
+                android:textColor="#000000"
+                android:textSize="10sp"
+                android:text="@string/eink_du_mode"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_toRightOf="@+id/eink_refresh_dialog_mode_a2_dither_button"
+                android:layout_marginLeft="5dp"/>
+            <Button
+                android:background="@null"
+                android:id="@+id/eink_refresh_dialog_mode_du_4_button"
+                android:textColor="#000000"
+                android:textSize="10sp"
+                android:text="@string/eink_du_4_mode"
+                android:layout_width="35dp"
+                android:layout_height="30dp"
+                android:layout_toRightOf="@+id/eink_refresh_dialog_mode_du_button"
+                android:layout_marginLeft="5dp" />
         </RelativeLayout>
         <RelativeLayout
             android:layout_width="wrap_content"
