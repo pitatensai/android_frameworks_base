@@ -100,8 +100,8 @@ public class EinkDialog extends EinkBaseDialog implements View.OnClickListener, 
         mDpiText = (TextView) findViewById(R.id.eink_dialog_dpi_edit);
         mDpiText.setText(String.valueOf(EinkSettingsProvider.DPI));
         mDpiCheckbox = (CheckBox) findViewById(R.id.eink_dialog_dpi_checkbox);
-        mDpiCheckbox.setOnCheckedChangeListener(this);
         mDpiCheckbox.setChecked(EinkSettingsProvider.isDpiSetting);
+        mDpiCheckbox.setOnCheckedChangeListener(this);
         mDpiSeekbar = (SeekBar) findViewById(R.id.eink_dialog_dpi_seekbar);
         mDpiSeekbar.setOnSeekBarChangeListener(this);
         mDpiSeekbar.setProgress(EinkSettingsProvider.DPI - EinkSettingsProvider.INIT_PROGRASS_DPI);

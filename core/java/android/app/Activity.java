@@ -968,12 +968,13 @@ public class Activity extends ContextThemeWrapper
     private boolean mIsInMultiWindowMode;
     private boolean mIsInPictureInPictureMode;
 
+    private boolean mCanRecreateWithDpi = false;
     private MyAppCustomConfigChangeReceiver mAppCustomConfigChangeReceiver = new MyAppCustomConfigChangeReceiver();
     private class MyAppCustomConfigChangeReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Slog.v(TAG, "onReceive onAppBleachConfigChanged ");
             String type = intent.getStringExtra("control_type");
+            Slog.v(TAG, "onReceive onAppBleachConfigChanged " + type);
             if("dpi".equals(type)) {
                 recreate();
             } else if ("bleach".equals(type)) {
@@ -1592,6 +1593,8 @@ public class Activity extends ContextThemeWrapper
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         if (DEBUG_LIFECYCLE) Slog.v(TAG, "onCreate " + this + ": " + savedInstanceState);
 
+        mCanRecreateWithDpi = false;
+
         if (mLastNonConfigurationInstances != null) {
             mFragments.restoreLoaderNonConfig(mLastNonConfigurationInstances.loaders);
         }
@@ -1958,6 +1961,22 @@ public class Activity extends ContextThemeWrapper
         IntentFilter appCustomConfigFilter = new IntentFilter();
         appCustomConfigFilter.addAction("com.rockchip.eink.appcustom");
         registerReceiver(mAppCustomConfigChangeReceiver, appCustomConfigFilter);
+
+        try {
+            if (mCanRecreateWithDpi) {
+                String packageName = getPackageName();
+                int storeDpi = getCurrentStoreDpi(this, packageName);
+                /*getResources().getConfiguration().densityDpi maybe incorrect*/
+                int currentDpi = getResources().getDisplayMetrics().densityDpi;
+                if (-1 != storeDpi && storeDpi != currentDpi) {
+                    Slog.v(TAG, "recreate " + this + " with onresume storeDpi="
+                        + storeDpi + ", currentDpi=" + currentDpi);
+                    recreate();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -5387,6 +5406,7 @@ public class Activity extends ContextThemeWrapper
      */
     public void startActivityForResult(@RequiresPermission Intent intent, int requestCode,
             @Nullable Bundle options) {
+        mCanRecreateWithDpi = true;
         if (mParent == null) {
             options = transferSpringboardActivityOptions(options);
             Instrumentation.ActivityResult ar =
@@ -5481,6 +5501,7 @@ public class Activity extends ContextThemeWrapper
      */
     public void startActivityForResultAsUser(Intent intent, String resultWho, int requestCode,
             @Nullable Bundle options, UserHandle user) {
+        mCanRecreateWithDpi = true;
         if (mParent != null) {
             throw new RuntimeException("Can't be called from a child");
         }
@@ -5518,6 +5539,7 @@ public class Activity extends ContextThemeWrapper
      * @hide Implement to provide correct calling token.
      */
     public void startActivityAsUser(Intent intent, Bundle options, UserHandle user) {
+        mCanRecreateWithDpi = true;
         if (mParent != null) {
             throw new RuntimeException("Can't be called from a child");
         }
@@ -5555,6 +5577,7 @@ public class Activity extends ContextThemeWrapper
         if (mParent != null) {
             throw new RuntimeException("Can't be called from a child");
         }
+        mCanRecreateWithDpi = true;
         options = transferSpringboardActivityOptions(options);
         Instrumentation.ActivityResult ar =
                 mInstrumentation.execStartActivityAsCaller(
@@ -5778,6 +5801,7 @@ public class Activity extends ContextThemeWrapper
      */
     @Override
     public void startActivities(Intent[] intents, @Nullable Bundle options) {
+        mCanRecreateWithDpi = true;
         mInstrumentation.execStartActivities(this, mMainThread.getApplicationThread(),
                 mToken, this, intents, options);
     }
@@ -5888,6 +5912,7 @@ public class Activity extends ContextThemeWrapper
      */
     public boolean startActivityIfNeeded(@RequiresPermission @NonNull Intent intent,
             int requestCode, @Nullable Bundle options) {
+        mCanRecreateWithDpi = true;
         if (mParent == null) {
             int result = ActivityManager.START_RETURN_INTENT_TO_CALLER;
             try {
@@ -6025,6 +6050,7 @@ public class Activity extends ContextThemeWrapper
     @Deprecated
     public void startActivityFromChild(@NonNull Activity child, @RequiresPermission Intent intent,
             int requestCode, @Nullable Bundle options) {
+        mCanRecreateWithDpi = true;
         options = transferSpringboardActivityOptions(options);
         Instrumentation.ActivityResult ar =
             mInstrumentation.execStartActivity(
@@ -6102,6 +6128,7 @@ public class Activity extends ContextThemeWrapper
     @UnsupportedAppUsage
     public void startActivityForResult(
             String who, Intent intent, int requestCode, @Nullable Bundle options) {
+        mCanRecreateWithDpi = true;
         Uri referrer = onProvideReferrer();
         if (referrer != null) {
             intent.putExtra(Intent.EXTRA_REFERRER, referrer);
@@ -6418,6 +6445,7 @@ public class Activity extends ContextThemeWrapper
      * lifecycle to {@link #onDestroy} and a new instance then created after it.
      */
     public void recreate() {
+        mCanRecreateWithDpi = false;
         if (mParent != null) {
             throw new IllegalStateException("Can only be called on top-level activity");
         }
