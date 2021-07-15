@@ -1125,9 +1125,9 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     private void onSwitchModeClick(View v) {
         if(mEinkManager != null){
             String curMode = mEinkManager.getMode();
-            if(!EinkManager.EinkMode.EPD_A2.equals(curMode)){
+            if(!EinkManager.EinkMode.EPD_A2_DITHER.equals(curMode)){
                 mPreMode = curMode;
-                mEinkManager.setMode(EinkManager.EinkMode.EPD_A2);
+                mEinkManager.setMode(EinkManager.EinkMode.EPD_A2_DITHER);
             } else if(mPreMode != null){
                 mEinkManager.setMode(mPreMode);
             }
