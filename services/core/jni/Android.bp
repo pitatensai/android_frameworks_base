@@ -7,15 +7,6 @@ cc_library_static {
         "-Wall",
         "-Werror",
         "-Wno-unused-parameter",
-        "-Wno-unused-function",
-        "-Wformat=0",
-        "-Wno-multichar",
-        "-U_FORTIFY_SOURCE",
-        "-D_FORTIFY_SOURCE=0",
-        "-Wno-error=format-security",
-        "-Wno-unused-variable",
-        "-Wno-undefined-bool-conversion",
-
         "-Wthread-safety",
 
         "-DEGL_EGLEXT_PROTOTYPES",
@@ -68,7 +59,8 @@ cc_library_static {
         "com_android_server_am_CachedAppOptimizer.cpp",
         "com_android_server_am_LowMemDetector.cpp",
         "com_android_server_pm_PackageManagerShellCommandDataLoader.cpp",
-        "com_android_server_eink_EinkService.cpp",
+        "com_android_server_rkdisplay_RkDisplayModes.cpp",
+        "com_android_server_audio_RkAudioSetting.cpp",
         "onload.cpp",
         ":lib_networkStatsFactory_native",
     ],
@@ -77,6 +69,7 @@ cc_library_static {
         "frameworks/base/libs",
         "frameworks/native/services",
         "system/gatekeeper/include",
+        "vendor/rockchip/hardware/interfaces",
     ],
 
     header_libs: [
@@ -132,7 +125,6 @@ cc_defaults {
         "libsensorservicehidl",
         "libgui",
         "libusbhost",
-        "libsuspend",
         "libtinyalsa",
         "libEGL",
         "libGLESv2",
@@ -175,10 +167,12 @@ cc_defaults {
         "android.frameworks.schedulerservice@1.0",
         "android.frameworks.sensorservice@1.0",
         "android.frameworks.stats@1.0",
+        "rockchip.hardware.outputmanager@1.0",
         "android.system.suspend@1.0",
         "service.incremental",
         "suspend_control_aidl_interface-cpp",
         "liblogwrap",
+        "librksoundsetting",
     ],
 
     static_libs: [
@@ -199,7 +193,6 @@ cc_defaults {
         }
     }
 }
-
 
 filegroup {
     name: "lib_networkStatsFactory_native",

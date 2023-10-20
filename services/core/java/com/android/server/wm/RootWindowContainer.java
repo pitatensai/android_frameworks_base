@@ -134,7 +134,6 @@ import android.util.ArraySet;
 import android.util.DisplayMetrics;
 import android.util.IntArray;
 import android.util.Pair;
-import android.util.Log;
 import android.util.Slog;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
@@ -170,9 +169,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import android.content.ContentValues;
-import android.database.Cursor;
-import android.os.SystemProperties;
 
 /** Root {@link WindowContainer} for the device. */
 class RootWindowContainer extends WindowContainer<DisplayContent>
@@ -3303,6 +3299,8 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
     }
 
     boolean allResumedActivitiesIdle() {
+        ActivityRecord focusedActivity = null;
+        int mode = 0;
         for (int displayNdx = getChildCount() - 1; displayNdx >= 0; --displayNdx) {
             // TODO(b/117135575): Check resumed activities on all visible stacks.
             final DisplayContent display = getChildAt(displayNdx);
@@ -3318,6 +3316,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
                 continue;
             }
             final ActivityRecord resumedActivity = stack.getResumedActivity();
+            focusedActivity = stack.getResumedActivity();
             if (resumedActivity == null || !resumedActivity.idle) {
                 if (DEBUG_STATES) {
                     Slog.d(TAG_STATES, "allResumedActivitiesIdle: stack="
@@ -3326,37 +3325,23 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
                 return false;
             }
         }
-        final ActivityStack mainStack = getTopDisplayFocusedStack();
-        ActivityRecord r = mainStack.topRunningActivityLocked();
-        Uri URI_EINK_SETTINGS_UPDATE = Uri.parse("content://com.android.systemui.eink/einksettingsupdate");
-        Uri URI_EINK_SETTINGS = Uri.parse("content://com.android.systemui.eink/einksettings");
-        String boot_completed = SystemProperties.get("sys.boot_completed");
-        if(boot_completed.equals("1")) {
-            new Thread(){
-                @Override
-                public void run() {
-                    Cursor cursor = null;
-                    try {
-                        cursor = mService.mContext.getContentResolver().query(URI_EINK_SETTINGS_UPDATE,
-                            null, "package_name = ?", new String[]{r.packageName}, null);
-                    } catch (Exception e) {
-                        Log.v(TAG, "EINK++ Exception: " + e.getMessage());
-                        cursor = null;
-                    }
-                    if(null != cursor) {
-                        if(cursor.getCount() > 0) {
-                            Log.v(TAG, "EINK++ cursor.getCount() > 0");
-                        } else {
-                            ContentValues values = new ContentValues();
-                            values.put("package_name", r.packageName);
-                            mService.mContext.getContentResolver().insert(URI_EINK_SETTINGS, values);
-                        }
-                    }
-                }
-            }.start();
+        if (focusedActivity != null) {
+            try {
+                mode = AppGlobals.getPackageManager().getPackagePerformanceMode(
+                    focusedActivity.mActivityComponent.toString());
+            } catch (RemoteException e) {
+            }
+            Slog.v(TAG_TASKS, "getPackagePerformanceMode -- "
+                + focusedActivity.mActivityComponent.toString()
+                + " -- " + focusedActivity.packageName
+                + " -- mode=" + mode);
         }
-        // Send launch end powerhint when idle
-        sendPowerHintForLaunchEndIfNeeded();
+        if (mode == 0) {
+            // Send launch end powerhint when idle
+            sendPowerHintForLaunchEndIfNeeded();
+        } else {
+            mPowerHintSent = false;
+        }
         return true;
     }
 

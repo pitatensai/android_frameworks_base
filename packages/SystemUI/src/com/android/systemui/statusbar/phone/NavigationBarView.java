@@ -86,7 +86,7 @@ import com.android.systemui.statusbar.policy.KeyButtonDrawable;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.function.Consumer;
-import android.content.pm.PackageManager;
+
 public class NavigationBarView extends FrameLayout implements
         NavigationModeController.ModeChangedListener {
     final static boolean DEBUG = false;
@@ -123,11 +123,8 @@ public class NavigationBarView extends FrameLayout implements
     private KeyButtonDrawable mRecentIcon;
     private KeyButtonDrawable mDockedIcon;
     private KeyButtonDrawable mVolumeAddIcon;
-    private KeyButtonDrawable mRefreshIcon;
     private KeyButtonDrawable mVolumeSubIcon;
     private KeyButtonDrawable mScreenshotIcon;
-    private KeyButtonDrawable mSwitchModeIcon;
-    private KeyButtonDrawable mEinkMenuIcon;
 
     private EdgeBackGestureHandler mEdgeBackGestureHandler;
     private final DeadZone mDeadZone;
@@ -337,9 +334,6 @@ public class NavigationBarView extends FrameLayout implements
         mButtonDispatchers.put(R.id.menu_container, mContextualButtonGroup);
         mButtonDispatchers.put(R.id.screenshot, new ButtonDispatcher(R.id.screenshot));
         mButtonDispatchers.put(R.id.volume_add, new ButtonDispatcher(R.id.volume_add));
-        mButtonDispatchers.put(R.id.refresh, new ButtonDispatcher(R.id.refresh));
-        mButtonDispatchers.put(R.id.switch_mode, new ButtonDispatcher(R.id.switch_mode));
-        mButtonDispatchers.put(R.id.eink_menu, new ButtonDispatcher(R.id.eink_menu));
         mButtonDispatchers.put(R.id.volume_sub, new ButtonDispatcher(R.id.volume_sub));
         mDeadZone = new DeadZone(this);
 
@@ -493,18 +487,6 @@ public class NavigationBarView extends FrameLayout implements
         return mButtonDispatchers.get(R.id.volume_add);
     }
 
-    public ButtonDispatcher getRefreshButton() {
-        return mButtonDispatchers.get(R.id.refresh);
-    }
-
-    public ButtonDispatcher getSwitchModeButton() {
-        return mButtonDispatchers.get(R.id.switch_mode);
-    }
-    
-    public ButtonDispatcher getEinkMenuButton() {
-        return mButtonDispatchers.get(R.id.eink_menu);
-    }
-    
     public ButtonDispatcher getVolumeSubButton() {
         return mButtonDispatchers.get(R.id.volume_sub);
     }
@@ -553,9 +535,7 @@ public class NavigationBarView extends FrameLayout implements
         if (orientationChange || densityChange || dirChange) {
             mBackIcon = getBackDrawable();
         }
-        mRefreshIcon = getDrawable(R.drawable.ic_sysbar_refresh_button);
-        mSwitchModeIcon = getDrawable(R.drawable.ic_sysbar_switch_mode_button);
-        mEinkMenuIcon = getDrawable(R.drawable.ic_sysbar_eink_menu_button);
+
         mVolumeAddIcon = getDrawable(R.drawable.ic_sysbar_volume_add_button);
         mVolumeSubIcon = getDrawable(R.drawable.ic_sysbar_volume_sub_button);
         mScreenshotIcon = getDrawable(R.drawable.ic_sysbar_capture_button);
@@ -712,9 +692,6 @@ public class NavigationBarView extends FrameLayout implements
         }
         getHomeButton().setImageDrawable(homeIcon);
         getBackButton().setImageDrawable(backIcon);
-        getRefreshButton().setImageDrawable(mRefreshIcon);
-        getSwitchModeButton().setImageDrawable(mSwitchModeIcon);
-        getEinkMenuButton().setImageDrawable(mEinkMenuIcon);
         getVolumeAddButton().setImageDrawable(mVolumeAddIcon);
         getVolumeSubButton().setImageDrawable(mVolumeSubIcon);
         getScreenshotButton().setImageDrawable(mScreenshotIcon);

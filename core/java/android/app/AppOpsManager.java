@@ -2305,7 +2305,7 @@ public class AppOpsManager {
             AppOpsManager.MODE_ALLOWED, // RUN_IN_BACKGROUND
             AppOpsManager.MODE_ALLOWED, // AUDIO_ACCESSIBILITY_VOLUME
             AppOpsManager.MODE_ALLOWED, // READ_PHONE_NUMBERS
-            AppOpsManager.MODE_DEFAULT, // REQUEST_INSTALL_PACKAGES
+            AppOpsManager.MODE_ALLOWED, // REQUEST_INSTALL_PACKAGES
             AppOpsManager.MODE_ALLOWED, // PICTURE_IN_PICTURE
             AppOpsManager.MODE_DEFAULT, // INSTANT_APP_START_FOREGROUND
             AppOpsManager.MODE_ALLOWED, // ANSWER_PHONE_CALLS

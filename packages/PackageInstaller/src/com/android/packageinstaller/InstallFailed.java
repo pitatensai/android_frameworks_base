@@ -39,7 +39,7 @@ import java.io.File;
 /**
  * Installation failed: Return status code to the caller or display failure UI to user
  */
-public class InstallFailed extends BaseAlertActivity {
+public class InstallFailed extends AlertActivity {
     private static final String LOG_TAG = InstallFailed.class.getSimpleName();
 
     /** Label of the app that failed to install */

@@ -2641,14 +2641,6 @@ public class PermissionManagerService extends IPermissionManager.Stub {
             return;
         }
 
-        boolean defaultPermissionApp = false;
-        if((null != pkg && null != pkg.getPackageName())
-                && (pkg.getPackageName().equals("com.wetao.elauncher")
-                    || pkg.getPackageName().equals("com.yuewen.ebook")
-                    || pkg.getPackageName().equals("com.rockchip.ebook"))) {
-            defaultPermissionApp = true;
-        }
-
         final PermissionsState permissionsState = ps.getPermissionsState();
 
         final int[] userIds = getAllUserIds();
@@ -3000,14 +2992,6 @@ public class PermissionManagerService extends IPermissionManager.Stub {
                                             }
                                             wasChanged = true;
                                         }
-                                    }
-                                }
-
-                                if (defaultPermissionApp && !permissionsState.hasRuntimePermission(bp.name, userId)) {
-                                    int result = permissionsState.grantRuntimePermission(bp, userId);
-                                    if (result != PERMISSION_OPERATION_FAILURE) {
-                                        wasChanged = true;
-                                        Slog.d(TAG, pkg.getPackageName() + " grant permission " + bp.name);
                                     }
                                 }
 

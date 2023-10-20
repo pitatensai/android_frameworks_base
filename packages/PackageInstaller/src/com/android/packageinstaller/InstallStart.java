@@ -45,7 +45,7 @@ import java.util.List;
  * Select which activity is the first visible activity of the installation and forward the intent to
  * it.
  */
-public class InstallStart extends BaseActivity {
+public class InstallStart extends Activity {
     private static final String LOG_TAG = InstallStart.class.getSimpleName();
 
     private static final String DOWNLOADS_AUTHORITY = "downloads";
@@ -102,6 +102,16 @@ public class InstallStart extends BaseActivity {
             setResult(RESULT_CANCELED);
             finish();
             return;
+        }
+
+        if (null == callingPackage && null != intent.getDataString()
+                && intent.getDataString().startsWith("content://com.android.rk.")) {
+            callingPackage = "com.android.rk";
+        } else if(null == callingPackage && null != intent.getDataString()
+                && intent.getDataString().startsWith("content://com.rockchips.mediacenter.")) {
+            callingPackage = "com.rockchips.mediacenter";
+        } else if(callingPackage == null) {
+            callingPackage = intent.getStringExtra(PackageInstallerActivity.EXTRA_CALLING_PACKAGE);
         }
 
         Intent nextActivity = new Intent(intent);

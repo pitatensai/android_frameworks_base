@@ -93,6 +93,7 @@ import com.android.server.appbinding.AppBindingService;
 import com.android.server.attention.AttentionManagerService;
 import com.android.server.audio.AudioService;
 import com.android.server.biometrics.AuthService;
+import com.android.server.audio.RkAudioSettingService;
 import com.android.server.biometrics.BiometricService;
 import com.android.server.biometrics.face.FaceService;
 import com.android.server.biometrics.fingerprint.FingerprintService;
@@ -149,7 +150,6 @@ import com.android.server.policy.PermissionPolicyService;
 import com.android.server.policy.PhoneWindowManager;
 import com.android.server.policy.role.LegacyRoleResolutionPolicy;
 import com.android.server.power.PowerManagerService;
-import com.android.server.eink.EinkService;
 import com.android.server.power.ShutdownThread;
 import com.android.server.power.ThermalManagerService;
 import com.android.server.recoverysystem.RecoverySystemService;
@@ -1141,11 +1141,7 @@ public final class SystemServer {
             dynamicSystem = new DynamicSystemService(context);
             ServiceManager.addService("dynamic_system", dynamicSystem);
             t.traceEnd();
-//zj add b
-            t.traceBegin("StartEinkService");
-            ServiceManager.addService(Context.EINK_SERVICE,new EinkService(context));
-            t.traceEnd();
-//zj add e
+
             if (!isWatch) {
                 t.traceBegin("StartConsumerIrService");
                 consumerIr = new ConsumerIrService(context);
@@ -1582,7 +1578,22 @@ public final class SystemServer {
             }
             t.traceEnd();
 
-            t.traceBegin("StartNotificationManager");
+             // $_rbox_$_modify_$_aisx: added 2017-06-27, add RkDisplayDeviceManagementService
+             try {
+                ServiceManager.addService(
+                    "drm_device_management",
+                    new RkDisplayDeviceManagementService(context));
+            } catch (Throwable e) {
+                Slog.e(TAG, "Failure starting kDisplayDeviceManagement Service", e);
+            }
+
+            Slog.i(TAG, "addService rockchip_audio_setting");
+            try {
+                ServiceManager.addService("rockchip_audio_setting", new RkAudioSettingService(context));
+            } catch (Throwable e) {
+                Slog.e(TAG, "Failure starting RkAudioSettingManager Service", e);
+            }
+
             mSystemServiceManager.startService(NotificationManagerService.class);
             SystemNotificationChannels.removeDeprecated(context);
             SystemNotificationChannels.createAll(context);

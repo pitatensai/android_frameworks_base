@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * Finish installation: Return status code to the caller or display "success" UI to user
  */
-public class InstallSuccess extends BaseAlertActivity {
+public class InstallSuccess extends AlertActivity {
     private static final String LOG_TAG = InstallSuccess.class.getSimpleName();
 
     @Nullable

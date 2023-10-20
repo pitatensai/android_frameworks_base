@@ -300,10 +300,6 @@
 
     <!-- Content description of the back button for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
     <string name="accessibility_back">Back</string>
-
-    <string name="accessibility_refresh">Refresh</string>
-    <string name="accessibility_switch_mode">Switch mode</string>
-    <string name="accessibility_eink_menu">Eink menu</string>
     <!-- Content description of the home button for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
     <string name="accessibility_home">Home</string>
     <!-- Content description of the menu button for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
@@ -2883,24 +2879,4 @@
     <!-- Text to display in a notification when ACTION_BATTERY_CHANGED.EXTRA_PRESENT field is false
     [CHAR LIMIT=NONE] -->
     <string name="battery_state_unknown_notification_text">Tap for more information</string>
-
-    <string name="eink_app_optimize">App Optimize</string>
-    <string name="eink_dpi_setting">DPI Setting</string>
-    <string name="eink_animation_setting">Animation Setting</string>
-    <string name="eink_contrast_setting">Contrast Setting</string>
-    <string name="eink_refresh_setting">Refresh Setting</string>
-    <string name="eink_refresh_mode">Refresh Mode</string>
-    <string name="eink_common_mode">Common</string>
-    <string name="eink_auto_mode">Auto</string>
-    <string name="eink_a2_mode">A2</string>
-    <string name="eink_a2_dither_mode">A2 Dither</string>
-    <string name="eink_du_mode">DU</string>
-    <string name="eink_du_4_mode">DU4</string>
-    <string name="eink_refresh_frequency">Refresh Frequency</string>
-    <string name="eink_app_bleach">App Bleach</string>
-    <string name="eink_app_bleach_text_plus">Text Plus</string>
-    <string name="eink_app_bleach_icon_color">Icons Color</string>
-    <string name="eink_app_bleach_cover_color">Cover Color</string>
-    <string name="eink_app_bleach_bg_color">BG Color</string>
-    <string name="eink_dialog_not_allow">Not allow to start config in current page</string>
 </resources>

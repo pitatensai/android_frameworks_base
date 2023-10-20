@@ -15845,7 +15845,6 @@ public class ActivityManagerService extends IActivityManager.Stub
 
         final String action = intent.getAction();
         if (isProtectedBroadcast
-                || "com.rockchip.eink.appcustom".equals(action)
                 || Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)
                 || Intent.ACTION_DISMISS_KEYBOARD_SHORTCUTS.equals(action)
                 || Intent.ACTION_MEDIA_BUTTON.equals(action)

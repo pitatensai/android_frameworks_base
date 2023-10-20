@@ -118,15 +118,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import android.os.EinkManager;
-//add for Eink bright screen standby
-import android.app.PendingIntent;
-import android.os.SystemClock;
-import android.app.AlarmManager;
-import android.content.IntentFilter;
-import android.content.BroadcastReceiver;
-import android.os.SystemProperties;
-
 
 /**
  * The power manager service is responsible for coordinating power management
@@ -240,7 +231,6 @@ public final class PowerManagerService extends SystemService
 
     /** If turning screen on takes more than this long, we show a warning on logcat. */
     private static final int SCREEN_ON_LATENCY_WARNING_MS = 200;
-    private static EinkManager mEinkManager;
 
     /** Constants for {@link #shutdownOrRebootInternal} */
     @Retention(RetentionPolicy.SOURCE)
@@ -333,14 +323,7 @@ public final class PowerManagerService extends SystemService
 
     // Timestamp of the last call to user activity.
     private long mLastUserActivityTime;
-
-    //add for Eink bright screen standby
-    private long mLastUserActivityTimeElapsedRealTime;
-
     private long mLastUserActivityTimeNoChangeLights;
-
-    //add for Eink bright screen standby
-    private long mLastUserActivityTimeNoChangeLightsElapsedRealTime;
 
     // Timestamp of last interactive power hint.
     private long mLastInteractivePowerHintTime;
@@ -876,121 +859,6 @@ public final class PowerManagerService extends SystemService
     private static native void nativeSetFeature(int featureId, int data);
     private static native boolean nativeForceSuspend();
 
-    //add for Eink bright screen standby
-    private native void nativeIdle();
-    private native void nativeWake();
-    private boolean mSpew = false;
-    private int mIdleDelay;
-    private boolean mUserBootComplete = false;
-    private boolean mIdleWakeUp = true;
-    private AlarmManager mAlarmManager;
-    private final String IDLE_WAKE_ACTION = "idle_wake_action";
-    private final String USER_TIMEOUT_ACTION = "user_timeout_action";
-    private BroadcastReceiver mRtcReceiver;
-    private BroadcastReceiver mBootReceiver;
-    private RtcAlarmHelper mIdleWakeAlarmHelper;//wakeup for idle wakeup.
-    private RtcAlarmHelper mUserTimeoutAlarmHelper;//wakeup for user activity timeout.
-    private PowerManager.WakeLock mAlarmHelperWakeLock;
-
-    class RtcAlarmHelper {
-        private PendingIntent mPendingIntent;
-        private String mAction;
-        private Runnable mSetRunnable;
-        private Runnable mCancelRunnable;
-        private long mWakeTime;
-
-        public RtcAlarmHelper(String action) {
-            mPendingIntent = PendingIntent.getBroadcast(mContext, 0, new Intent(action),
-                                PendingIntent.FLAG_UPDATE_CURRENT);
-            mAction = action;
-
-            mSetRunnable = new Runnable() {
-                public void run() {
-                    if (mSpew)
-                        Slog.d(TAG, "set alarm:" + mAction
-                                + ", now:" + System.currentTimeMillis() + ", wake:" + mWakeTime);
-                    mAlarmManager.set(AlarmManager.RTC_WAKEUP,
-                       mWakeTime,
-                    mPendingIntent);
-                }
-            };
-
-            mCancelRunnable = new Runnable() {
-                public void run() {
-                    try{
-                        if (mSpew)
-                            Slog.d(TAG, "cancel alarm:" + mAction);
-                        mAlarmManager.cancel(mPendingIntent);
-                    } catch(Exception e) {
-                    }
-                }
-            };
-        }
-
-        public void setAlarm(long wakeTime) {
-            cancel();
-            mWakeTime = wakeTime;
-            //handler alarm calls in other thread,
-            //in case of dead locks.
-            mHandler.removeCallbacks(mSetRunnable);
-            mHandler.post(mSetRunnable);
-        }
-
-        //for rtc time change cause standby bug.
-        public boolean isValide(long wakeTime) {
-            return wakeTime > mWakeTime;
-        }
-
-        public void cancel() {
-            mHandler.removeCallbacks(mCancelRunnable);
-            mHandler.post(mCancelRunnable);
-        }
-    }
-
-    private void cancelAlarms() {
-        if (mSpew)
-            	Slog.d(TAG, "cancelAlarms:");
-        mIdleWakeAlarmHelper.cancel();
-        mUserTimeoutAlarmHelper.cancel();
-    }
-
-    private Runnable mIdleTimer = new Runnable() {
-        public void run() {
-            if (mIdleWakeUp && mWakefulnessRaw != WAKEFULNESS_ASLEEP) {
-                //wake cpu a minute after idle, if needed.
-                long wakeTime = System.currentTimeMillis() + 60000;
-                if (mSpew)
-                    Slog.d(TAG, "mIdleTimer runnable:" + wakeTime);
-                if (!mAlarmHelperWakeLock.isHeld())
-                    mAlarmHelperWakeLock.acquire(500);
-                mIdleWakeAlarmHelper.setAlarm(wakeTime);
-            }
-            //if system block suspend, cancle idle this time and postDelay
-            int SuspendBlockerCount = ((SuspendBlockerImpl)mWakeLockSuspendBlocker).currentCount();
-            Slog.d(TAG, "mWakeLockSuspendBlocker currentCount = " + SuspendBlockerCount);
-            if (0 == SuspendBlockerCount) {
-                nativeIdle();
-            } else {
-                mHandler.postDelayed(mIdleTimer, mIdleDelay);
-            }
-        }
-    };
-
-    private void resetIdle(boolean reset) {
-        if (mSpew)
-            Slog.d(TAG, "resetIdle:" + reset);
-        mHandler.removeCallbacks(mIdleTimer);
-        mIdleWakeAlarmHelper.cancel();
-        if (reset && mUserBootComplete) {
-            nativeWake();
-            int newIdleDelay = SystemProperties.getInt("persist.sys.idle-delay", 10000);
-            if (newIdleDelay != mIdleDelay)
-                mIdleDelay = newIdleDelay;
-            if (mIdleDelay > 0)
-                mHandler.postDelayed(mIdleTimer, mIdleDelay);
-        }
-    }
-
     public PowerManagerService(Context context) {
         this(context, new Injector());
     }
@@ -1006,6 +874,7 @@ public final class PowerManagerService extends SystemService
         mSystemProperties = injector.createSystemPropertiesWrapper();
         mClock = injector.createClock();
         mInjector = injector;
+
         mHandlerThread = new ServiceThread(TAG,
                 Process.THREAD_PRIORITY_DISPLAY, false /*allowIo*/);
         mHandlerThread.start();
@@ -1124,13 +993,11 @@ public final class PowerManagerService extends SystemService
             }
             mHalAutoSuspendModeEnabled = false;
             mHalInteractiveModeEnabled = true;
+
             mWakefulnessRaw = WAKEFULNESS_AWAKE;
             sQuiescent = mSystemProperties.get(SYSTEM_PROPERTY_QUIESCENT, "0").equals("1")
                     || InitProperties.userspace_reboot_in_progress().orElse(false);
 
-            //add for Eink bright screen standby
-            mIdleDelay = SystemProperties.getInt("persist.sys.idle-delay", 10000);
-            mIdleWakeUp = SystemProperties.getBoolean("persist.sys.idle-wakeup", true);
             mNativeWrapper.nativeInit(this);
             mNativeWrapper.nativeSetAutoSuspend(false);
             mNativeWrapper.nativeSetInteractive(true);
@@ -1175,67 +1042,6 @@ public final class PowerManagerService extends SystemService
     }
 
     public void systemReady(IAppOpsService appOps) {
-        //add for Eink bright screen standby
-        mAlarmManager = (AlarmManager)mContext.getSystemService(Context.ALARM_SERVICE);
-        mRtcReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String action = intent.getAction();
-                if (mSpew)
-                    Slog.d(TAG, "onReceive:" + action + ", now:" + System.currentTimeMillis());
-
-                //all these alarms request system wake for some seconds.
-                resetIdle(true);
-                if(action.equals(IDLE_WAKE_ACTION)) {
-                    if (mSpew)
-                        Slog.d(TAG, "IDLE_WAKE_ACTION:");
-                    //wake at idle's next minute.
-                    //reset idle delay, so others can do sth(like update UI).
-                } else if(action.equals(USER_TIMEOUT_ACTION)) {
-                    if (mSpew)
-                        Slog.d(TAG, "mUserTimeoutAlarmHelper timeout,now:"
-                        + System.currentTimeMillis() + ", uptimeMillis:" + SystemClock.uptimeMillis());
-                    mHandler.removeMessages(MSG_USER_ACTIVITY_TIMEOUT);
-                    Message msg = mHandler.obtainMessage(MSG_USER_ACTIVITY_TIMEOUT);
-                    msg.setAsynchronous(true);
-                    mHandler.sendMessage(msg);
-                } else if(action.equals(Intent.ACTION_TIME_CHANGED)) {
-                    //if time changed, reset all.
-                    if (mSpew)
-                        Slog.d(TAG, "ACTION_TIME_CHANGED:");	
-                    cancelAlarms();
-                    userActivityNoUpdateLocked(SystemClock.uptimeMillis(),
-                    PowerManager.USER_ACTIVITY_EVENT_OTHER, 0, Process.SYSTEM_UID);
-                }
-            }
-        };
-
-        mBootReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String strAction = intent.getAction();
-                if (strAction.equals(Intent.ACTION_BOOT_COMPLETED)) {
-                    mUserBootComplete = true;
-                    Slog.d(TAG, "ACTION_BOOT_COMPLETED:......................");
-                }
-            }
-        };
-
-        {
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(IDLE_WAKE_ACTION);
-            filter.addAction(USER_TIMEOUT_ACTION);
-            filter.addAction(Intent.ACTION_TIME_CHANGED);
-            mContext.registerReceiver(mRtcReceiver, filter);
-
-            filter = new IntentFilter();
-            filter.addAction(Intent.ACTION_BOOT_COMPLETED);
-            mContext.registerReceiver(mBootReceiver, filter);
-
-            mIdleWakeAlarmHelper = new RtcAlarmHelper(IDLE_WAKE_ACTION);
-            mUserTimeoutAlarmHelper = new RtcAlarmHelper(USER_TIMEOUT_ACTION);
-        }
-
         synchronized (mLock) {
             mSystemReady = true;
             mAppOps = appOps;
@@ -1246,10 +1052,6 @@ public final class PowerManagerService extends SystemService
             mAttentionDetector.systemReady(mContext);
 
             PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
-            //add for Eink bright screen standby
-            mAlarmHelperWakeLock = pm.newWakeLock(
-            PowerManager.PARTIAL_WAKE_LOCK, "alarm_helper");
-
             mScreenBrightnessSettingMinimum = pm.getBrightnessConstraint(
                     PowerManager.BRIGHTNESS_CONSTRAINT_TYPE_MINIMUM);
             mScreenBrightnessSettingMaximum = pm.getBrightnessConstraint(
@@ -1827,10 +1629,6 @@ public final class PowerManagerService extends SystemService
                     || (flags & PowerManager.USER_ACTIVITY_FLAG_INDIRECT) != 0) {
                 return false;
             }
-            //add by lyx, reset idle for user activity
-               if (mSpew)
-                   Slog.d(TAG, "userActivityNoUpdateLocked: reset idle true");
-               resetIdle(true);
 
             maybeUpdateForegroundProfileLastActivityLocked(eventTime);
 
@@ -1838,9 +1636,6 @@ public final class PowerManagerService extends SystemService
                 if (eventTime > mLastUserActivityTimeNoChangeLights
                         && eventTime > mLastUserActivityTime) {
                     mLastUserActivityTimeNoChangeLights = eventTime;
-                    //add by lyx
-                    mLastUserActivityTimeNoChangeLightsElapsedRealTime = SystemClock.elapsedRealtime();
-
                     mDirty |= DIRTY_USER_ACTIVITY;
                     if (event == PowerManager.USER_ACTIVITY_EVENT_BUTTON) {
                         mDirty |= DIRTY_QUIESCENT;
@@ -1851,9 +1646,6 @@ public final class PowerManagerService extends SystemService
             } else {
                 if (eventTime > mLastUserActivityTime) {
                     mLastUserActivityTime = eventTime;
-                    //add by lyx
-                    mLastUserActivityTimeElapsedRealTime = SystemClock.elapsedRealtime();
-
                     mDirty |= DIRTY_USER_ACTIVITY;
                     if (event == PowerManager.USER_ACTIVITY_EVENT_BUTTON) {
                         mDirty |= DIRTY_QUIESCENT;
@@ -1888,6 +1680,7 @@ public final class PowerManagerService extends SystemService
         if (DEBUG_SPEW) {
             Slog.d(TAG, "wakeUpNoUpdateLocked: eventTime=" + eventTime + ", uid=" + reasonUid);
         }
+
         if (eventTime < mLastSleepTime || getWakefulnessLocked() == WAKEFULNESS_AWAKE
                 || mForceSuspendActive || !mSystemReady) {
             return false;
@@ -1950,12 +1743,6 @@ public final class PowerManagerService extends SystemService
                 || !mBootCompleted) {
             return false;
         }
-
-        //add by lyx, cleanup here.
-        if (mSpew)
-            Slog.d(TAG, "goToSleepNoUpdateLocked: reset idle false and cancel alarms");
-        resetIdle(false);
-        cancelAlarms();
 
         Trace.traceBegin(Trace.TRACE_TAG_POWER, "goToSleep");
         try {
@@ -2102,7 +1889,6 @@ public final class PowerManagerService extends SystemService
             if (getWakefulnessLocked() == WAKEFULNESS_AWAKE) {
                 Trace.asyncTraceEnd(Trace.TRACE_TAG_POWER, TRACE_SCREEN_ON, 0);
                 final int latencyMs = (int) (mClock.uptimeMillis() - mLastWakeTime);
-
                 if (latencyMs >= SCREEN_ON_LATENCY_WARNING_MS) {
                     Slog.w(TAG, "Screen on took " + latencyMs + " ms");
                 }
@@ -2481,8 +2267,6 @@ public final class PowerManagerService extends SystemService
      * This function must have no other side-effects.
      */
     private void updateUserActivitySummaryLocked(long now, int dirty) {
-        //add by lyx
-        now = SystemClock.elapsedRealtime();
         // Update the status of the user activity timeout timer.
         if ((dirty & (DIRTY_WAKE_LOCKS | DIRTY_USER_ACTIVITY
                 | DIRTY_WAKEFULNESS | DIRTY_SETTINGS)) != 0) {
@@ -2500,26 +2284,14 @@ public final class PowerManagerService extends SystemService
                 final boolean userInactiveOverride = mUserInactiveOverrideFromWindowManager;
                 final long nextProfileTimeout = getNextProfileTimeoutLocked(now);
 
-                //add by lyx, cleanup here.
-                if (mSpew)
-                    Slog.d(TAG, "updateUserActivitySummaryLocked: cancel alarms and reset idle true");
-                cancelAlarms();
-                resetIdle(true);
-
                 mUserActivitySummary = 0;
                 if (mLastUserActivityTime >= mLastWakeTime) {
-                    //modify by lyx
-                    nextTimeout = mLastUserActivityTimeElapsedRealTime //mLastUserActivityTime
-                    //nextTimeout = mLastUserActivityTime
+                    nextTimeout = mLastUserActivityTime
                             + screenOffTimeout - screenDimDuration;
                     if (now < nextTimeout) {
                         mUserActivitySummary = USER_ACTIVITY_SCREEN_BRIGHT;
                     } else {
-                        //modify by lyx
-                        nextTimeout = mLastUserActivityTimeElapsedRealTime//mLastUserActivityTime
-                             + screenOffTimeout;
-                    
-                        //nextTimeout = mLastUserActivityTime + screenOffTimeout;
+                        nextTimeout = mLastUserActivityTime + screenOffTimeout;
                         if (now < nextTimeout) {
                             mUserActivitySummary = USER_ACTIVITY_SCREEN_DIM;
                         }
@@ -2527,10 +2299,7 @@ public final class PowerManagerService extends SystemService
                 }
                 if (mUserActivitySummary == 0
                         && mLastUserActivityTimeNoChangeLights >= mLastWakeTime) {
-                    //modify by lyx
-                    nextTimeout = mLastUserActivityTimeNoChangeLightsElapsedRealTime //mLastUserActivityTimeNoChangeLights
-                         + screenOffTimeout;
-                    //nextTimeout = mLastUserActivityTimeNoChangeLights + screenOffTimeout;
+                    nextTimeout = mLastUserActivityTimeNoChangeLights + screenOffTimeout;
                     if (now < nextTimeout) {
                         if (mDisplayPowerRequest.policy == DisplayPowerRequest.POLICY_BRIGHT
                                 || mDisplayPowerRequest.policy == DisplayPowerRequest.POLICY_VR) {
@@ -2546,11 +2315,7 @@ public final class PowerManagerService extends SystemService
                         final long anyUserActivity = Math.max(mLastUserActivityTime,
                                 mLastUserActivityTimeNoChangeLights);
                         if (anyUserActivity >= mLastWakeTime) {
-                            //modify by lyx
-                            //nextTimeout = anyUserActivity + sleepTimeout;
-                            nextTimeout = Math.max(mLastUserActivityTimeElapsedRealTime,
-                            mLastUserActivityTimeNoChangeLightsElapsedRealTime) + sleepTimeout;
-                            //nextTimeout = anyUserActivity + sleepTimeout;
+                            nextTimeout = anyUserActivity + sleepTimeout;
                             if (now < nextTimeout) {
                                 mUserActivitySummary = USER_ACTIVITY_SCREEN_DREAM;
                             }
@@ -2584,12 +2349,13 @@ public final class PowerManagerService extends SystemService
                     nextTimeout = Math.min(nextTimeout, nextProfileTimeout);
                 }
 
-                if (mUserActivitySummary != 0 && nextTimeout >= 0) {
-                    //modify by lyx, set an alarm for waking from idle, then send msg
-                    mUserTimeoutAlarmHelper.setAlarm(System.currentTimeMillis()
-                            + nextTimeout - SystemClock.elapsedRealtime());
+                if (Integer.MAX_VALUE == screenOffTimeout) {
+                    mUserActivitySummary = USER_ACTIVITY_SCREEN_BRIGHT;
+                    //Slog.d(TAG, "set mUserActivitySummary USER_ACTIVITY_SCREEN_BRIGHT never sleep " + nextTimeout);
+                }
 
-                    //scheduleUserInactivityTimeout(nextTimeout);
+                if (mUserActivitySummary != 0 && nextTimeout >= 0) {
+                    scheduleUserInactivityTimeout(nextTimeout);
                 }
             } else {
                 mUserActivitySummary = 0;
@@ -2710,11 +2476,6 @@ public final class PowerManagerService extends SystemService
      * bit and calling update power state.  Wakefulness transitions are handled elsewhere.
      */
     private void handleUserActivityTimeout() { // runs on handler thread
-        if (mSpew)
-            Slog.d(TAG, "handleUserActivityTimeout: cancel alarms and reset idle true");
-        cancelAlarms();
-        resetIdle(true);
-
         synchronized (mLock) {
             if (DEBUG_SPEW) {
                 Slog.d(TAG, "handleUserActivityTimeout");
@@ -4912,12 +4673,6 @@ public final class PowerManagerService extends SystemService
         public String toString() {
             synchronized (this) {
                 return mName + ": ref count=" + mReferenceCount;
-            }
-        }
-
-        public int currentCount() {
-            synchronized (this) {
-                return mReferenceCount;
             }
         }
 

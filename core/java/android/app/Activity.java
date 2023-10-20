@@ -36,10 +36,23 @@ import android.annotation.StyleRes;
 import android.annotation.SystemApi;
 import android.annotation.TestApi;
 import android.app.VoiceInteractor.Request;
+import android.os.PersistableBundle;
+import android.transition.Scene;
+import android.transition.TransitionManager;
+import android.util.ArrayMap;
+import android.util.SuperNotCalledException;
+import android.widget.Toolbar;
+import android.widget.Toast;
+
+import com.android.internal.app.IVoiceInteractor;
+import com.android.internal.app.WindowDecorActionBar;
+import com.android.internal.app.ToolbarActionBar;
+
+import android.annotation.SystemApi;
+import android.os.SystemProperties;
 import android.app.admin.DevicePolicyManager;
 import android.app.assist.AssistContent;
 import android.compat.annotation.UnsupportedAppUsage;
-import android.content.BroadcastReceiver;
 import android.content.ComponentCallbacks2;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -47,7 +60,6 @@ import android.content.Context;
 import android.content.CursorLoader;
 import android.content.IIntentSender;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.LocusId;
 import android.content.SharedPreferences;
@@ -954,21 +966,6 @@ public class Activity extends ContextThemeWrapper
     private boolean mIsInMultiWindowMode;
     private boolean mIsInPictureInPictureMode;
 
-    private boolean mCanRecreateWithDpi = false;
-    private MyAppCustomConfigChangeReceiver mAppCustomConfigChangeReceiver = new MyAppCustomConfigChangeReceiver();
-    private class MyAppCustomConfigChangeReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String type = intent.getStringExtra("control_type");
-            Slog.v(TAG, "onReceive onAppBleachConfigChanged " + type);
-            if("dpi".equals(type)) {
-                recreate();
-            } else if ("bleach".equals(type)) {
-                refreshCurrentView();
-            }
-        }
-    }
-
     private final WindowControllerCallback mWindowControllerCallback =
             new WindowControllerCallback() {
         /**
@@ -1579,8 +1576,6 @@ public class Activity extends ContextThemeWrapper
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         if (DEBUG_LIFECYCLE) Slog.v(TAG, "onCreate " + this + ": " + savedInstanceState);
 
-        mCanRecreateWithDpi = false;
-
         if (mLastNonConfigurationInstances != null) {
             mFragments.restoreLoaderNonConfig(mLastNonConfigurationInstances.loaders);
         }
@@ -1943,56 +1938,6 @@ public class Activity extends ContextThemeWrapper
         notifyContentCaptureManagerIfNeeded(CONTENT_CAPTURE_RESUME);
 
         mCalled = true;
-
-        IntentFilter appCustomConfigFilter = new IntentFilter();
-        appCustomConfigFilter.addAction("com.rockchip.eink.appcustom");
-        registerReceiver(mAppCustomConfigChangeReceiver, appCustomConfigFilter);
-
-        try {
-            if (mCanRecreateWithDpi) {
-                String packageName = getPackageName();
-                int storeDpi = getCurrentStoreDpi(this, packageName);
-                /*getResources().getConfiguration().densityDpi maybe incorrect*/
-                int currentDpi = getResources().getDisplayMetrics().densityDpi;
-                if (-1 != storeDpi && storeDpi != currentDpi) {
-                    Slog.v(TAG, "recreate " + this + " with onresume storeDpi="
-                        + storeDpi + ", currentDpi=" + currentDpi);
-                    recreate();
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * @hide
-     */
-    public void refreshCurrentView() {
-        try {
-            Window window = getWindow();
-            if (null != window) {
-                refreshCurrentView(window.getDecorView());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void refreshCurrentView(View view) {
-        if (null == view) {
-            return;
-        }
-        if (view instanceof ViewGroup) {
-            int count = ((ViewGroup) view).getChildCount();
-            for (int i = 0; i < count; i++) {
-                View childView = ((ViewGroup) view).getChildAt(i);
-                view.refreshCurrentView();
-                refreshCurrentView(childView);
-            }
-        } else {
-            view.refreshCurrentView();
-        }
     }
 
     /**
@@ -2430,7 +2375,6 @@ public class Activity extends ContextThemeWrapper
 
         notifyContentCaptureManagerIfNeeded(CONTENT_CAPTURE_PAUSE);
         mCalled = true;
-        unregisterReceiver(mAppCustomConfigChangeReceiver);
     }
 
     /**
@@ -3753,6 +3697,20 @@ public class Activity extends ContextThemeWrapper
      * @see android.view.KeyEvent
      */
     public boolean onKeyDown(int keyCode, KeyEvent event)  {
+        if("box".equals(SystemProperties.get("ro.target.product","unkonw"))){
+            String mstate=null;
+            mstate = SystemProperties.get("sys.KeyMouse.mKeyMouseState");
+
+            if ((keyCode == KeyEvent.KEYCODE_PROFILE_SWITCH)) {
+                if ("on".equals(mstate)) {
+                    Toast.makeText(Activity.this, "Enter into mouse mode, click again to quit", Toast.LENGTH_LONG).show();
+                } else if ("off".equals(mstate)) {
+                    Toast.makeText(Activity.this, "Restore to default button mode", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+
+
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (getApplicationInfo().targetSdkVersion
                     >= Build.VERSION_CODES.ECLAIR) {
@@ -5378,7 +5336,6 @@ public class Activity extends ContextThemeWrapper
      */
     public void startActivityForResult(@RequiresPermission Intent intent, int requestCode,
             @Nullable Bundle options) {
-        mCanRecreateWithDpi = true;
         if (mParent == null) {
             options = transferSpringboardActivityOptions(options);
             Instrumentation.ActivityResult ar =
@@ -5473,7 +5430,6 @@ public class Activity extends ContextThemeWrapper
      */
     public void startActivityForResultAsUser(Intent intent, String resultWho, int requestCode,
             @Nullable Bundle options, UserHandle user) {
-        mCanRecreateWithDpi = true;
         if (mParent != null) {
             throw new RuntimeException("Can't be called from a child");
         }
@@ -5511,7 +5467,6 @@ public class Activity extends ContextThemeWrapper
      * @hide Implement to provide correct calling token.
      */
     public void startActivityAsUser(Intent intent, Bundle options, UserHandle user) {
-        mCanRecreateWithDpi = true;
         if (mParent != null) {
             throw new RuntimeException("Can't be called from a child");
         }
@@ -5549,7 +5504,6 @@ public class Activity extends ContextThemeWrapper
         if (mParent != null) {
             throw new RuntimeException("Can't be called from a child");
         }
-        mCanRecreateWithDpi = true;
         options = transferSpringboardActivityOptions(options);
         Instrumentation.ActivityResult ar =
                 mInstrumentation.execStartActivityAsCaller(
@@ -5773,7 +5727,6 @@ public class Activity extends ContextThemeWrapper
      */
     @Override
     public void startActivities(Intent[] intents, @Nullable Bundle options) {
-        mCanRecreateWithDpi = true;
         mInstrumentation.execStartActivities(this, mMainThread.getApplicationThread(),
                 mToken, this, intents, options);
     }
@@ -5884,7 +5837,6 @@ public class Activity extends ContextThemeWrapper
      */
     public boolean startActivityIfNeeded(@RequiresPermission @NonNull Intent intent,
             int requestCode, @Nullable Bundle options) {
-        mCanRecreateWithDpi = true;
         if (mParent == null) {
             int result = ActivityManager.START_RETURN_INTENT_TO_CALLER;
             try {
@@ -6022,7 +5974,6 @@ public class Activity extends ContextThemeWrapper
     @Deprecated
     public void startActivityFromChild(@NonNull Activity child, @RequiresPermission Intent intent,
             int requestCode, @Nullable Bundle options) {
-        mCanRecreateWithDpi = true;
         options = transferSpringboardActivityOptions(options);
         Instrumentation.ActivityResult ar =
             mInstrumentation.execStartActivity(
@@ -6100,7 +6051,6 @@ public class Activity extends ContextThemeWrapper
     @UnsupportedAppUsage
     public void startActivityForResult(
             String who, Intent intent, int requestCode, @Nullable Bundle options) {
-        mCanRecreateWithDpi = true;
         Uri referrer = onProvideReferrer();
         if (referrer != null) {
             intent.putExtra(Intent.EXTRA_REFERRER, referrer);
@@ -6417,7 +6367,6 @@ public class Activity extends ContextThemeWrapper
      * lifecycle to {@link #onDestroy} and a new instance then created after it.
      */
     public void recreate() {
-        mCanRecreateWithDpi = false;
         if (mParent != null) {
             throw new IllegalStateException("Can only be called on top-level activity");
         }

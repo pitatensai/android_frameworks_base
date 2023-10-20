@@ -2320,6 +2320,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
             stmt = db.compileStatement("INSERT OR IGNORE INTO secure(name,value)"
                     + " VALUES(?,?);");
 
+            loadStringSetting(stmt, Settings.Secure.DEFAULT_INPUT_METHOD,
+                    R.string.def_input_method);
+                    
             // Don't do this.  The SystemServer will initialize ADB_ENABLED from a
             // persistent system property instead.
             //loadSetting(stmt, Settings.Secure.ADB_ENABLED, 0);
@@ -2356,6 +2359,11 @@ class DatabaseHelper extends SQLiteOpenHelper {
             } else {
                 loadBooleanSetting(stmt, Settings.System.LOCKSCREEN_DISABLED,
                         R.bool.def_lockscreen_disabled);
+            }
+
+            if (SystemProperties.get("ro.target.product","").equals("box")) {
+                loadBooleanSetting(stmt, Settings.Secure.TV_USER_SETUP_COMPLETE,
+                    R.bool.def_tv_user_setup_complete);
             }
 
             loadBooleanSetting(stmt, Settings.Secure.SCREENSAVER_ENABLED,
@@ -2456,10 +2464,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
             loadSetting(stmt, Settings.Global.MODE_RINGER,
                     AudioManager.RINGER_MODE_NORMAL);
 
-            //loadDefaultAnimationSettings(stmt);
-            loadSetting(stmt, Settings.System.WINDOW_ANIMATION_SCALE, "0");
-            loadSetting(stmt, Settings.System.TRANSITION_ANIMATION_SCALE, "0");
-            loadSetting(stmt, Settings.System.ANIMATOR_DURATION_SCALE, "0");
+            loadDefaultAnimationSettings(stmt);
 
             // --- Previously in 'secure'
             loadBooleanSetting(stmt, Settings.Global.WIFI_ON,

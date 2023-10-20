@@ -47,16 +47,13 @@ import static com.android.systemui.statusbar.phone.StatusBar.dumpBarTransitions;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.annotation.IdRes;
 import android.annotation.Nullable;
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityTaskManager;
-import android.app.AlertDialog;
 import android.app.IActivityTaskManager;
 import android.app.StatusBarManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
@@ -72,7 +69,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.Message;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -145,9 +141,6 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 
 import dagger.Lazy;
-import android.os.EinkManager;
-import android.content.pm.PackageManager;
-import android.widget.Toast;
 
 /**
  * Fragment containing the NavigationBarFragment. Contains logic for what happens
@@ -221,27 +214,6 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     public int mDisplayId;
     private boolean mIsOnDefaultDisplay;
     public boolean mHomeBlockedThisTouch;
-    private EinkDialog mEinkDialog;
-    private Context mContext;
-    private ActivityManager mActivityManager;
-
-    private final String[] BLACK_EINK_CONFIG_APP = new String[] {
-            "com.android.systemui",
-            "com.android.launcher3",
-            "com.rockchip.notedemo",
-    };
-
-    private Handler popupHandler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case 0:
-                    showAlterDialog();
-                    break;
-            }
-        }
-
-    };
 
     /**
      * When user is QuickSwitching between apps of different orientations, we'll draw a fake
@@ -260,10 +232,7 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     private ViewTreeObserver.OnGlobalLayoutListener mOrientationHandleGlobalLayoutListener;
     private UiEventLogger mUiEventLogger;
     private boolean mShowOrientedHandleForImmersiveMode;
-    private static EinkManager mEinkManager;
     private long mLastClickScreenshotTime = 0;
-    private String mPreMode = null;
-    public static boolean isShowEinkDialog = false;
 
     @com.android.internal.annotations.VisibleForTesting
     public enum NavBarActionEvent implements UiEventLogger.UiEventEnum {
@@ -466,12 +435,8 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mContext = this.getContext();
         mCommandQueue.observe(getLifecycle(), this);
         mWindowManager = getContext().getSystemService(WindowManager.class);
-        if (mEinkManager == null){
-            mEinkManager = (EinkManager)getContext().getSystemService(Context.EINK_SERVICE);
-        }
         mAccessibilityManager = getContext().getSystemService(AccessibilityManager.class);
         mContentResolver = getContext().getContentResolver();
         mContentResolver.registerContentObserver(
@@ -1048,25 +1013,7 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
 
         ButtonDispatcher backButton = mNavigationBarView.getBackButton();
         backButton.setLongClickable(true);
-        ButtonDispatcher refreshButton = mNavigationBarView.getRefreshButton();
-        ButtonDispatcher switchModeButton = mNavigationBarView.getSwitchModeButton();
-        ButtonDispatcher einkMenuButton = mNavigationBarView.getEinkMenuButton();
-        if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_EINK)) {
-            refreshButton.setLongClickable(true);
-            refreshButton.setOnClickListener(this:: onRefreshClick);
-            refreshButton.setOnTouchListener(this:: onRefreshTouch);
-            refreshButton.setVisibility(View.VISIBLE);
-            switchModeButton.setLongClickable(true);
-            switchModeButton.setOnClickListener(this:: onSwitchModeClick);
-            switchModeButton.setVisibility(View.VISIBLE);
-            einkMenuButton.setLongClickable(true);
-            einkMenuButton.setOnClickListener(this:: onEinkMenuClick);
-            einkMenuButton.setVisibility(View.VISIBLE);
-        } else {
-            refreshButton.setVisibility(View.GONE);
-            switchModeButton.setVisibility(View.GONE);
-            einkMenuButton.setVisibility(View.GONE);
-        }
+
         ButtonDispatcher homeButton = mNavigationBarView.getHomeButton();
         homeButton.setOnTouchListener(this::onHomeTouch);
         homeButton.setOnLongClickListener(this::onHomeLongClick);
@@ -1104,64 +1051,6 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
         }
     }
 
-    private void onRefreshRepaintEverything(){
-        if (mEinkManager != null) {
-            mEinkManager.sendOneFullFrame();
-            mNavigationBarView.postInvalidate();
-        }
-    }
-
-    private boolean onRefreshTouch(View v, MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_UP) {
-            onRefreshRepaintEverything();
-        }
-        return false;
-    }
-
-    private void onRefreshClick(View v) {
-        onRefreshRepaintEverything();
-    }
-
-    private void onSwitchModeClick(View v) {
-        if(mEinkManager != null){
-            String curMode = mEinkManager.getMode();
-            if(!EinkManager.EinkMode.EPD_A2_DITHER.equals(curMode)){
-                mPreMode = curMode;
-                mEinkManager.setMode(EinkManager.EinkMode.EPD_A2_DITHER);
-            } else if(mPreMode != null){
-                mEinkManager.setMode(mPreMode);
-            }
-            mNavigationBarView.postInvalidate();
-        }
-    }
-
-    private void onEinkMenuClick(View v) {
-        Log.d(TAG, "onEinkMenuClick mContext: " + mContext);
-        try {
-            String topPackageName = EinkSettingsProvider.packageName;
-            boolean queryTopActivityName = false;
-            if (queryTopActivityName) {
-                if (null == mActivityManager) {
-                    mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
-                }
-                final List<ActivityManager.RunningTaskInfo> list = mActivityManager.getRunningTasks(2);
-                if (null != list && list.size() > 0) {
-                    topPackageName = list.get(0).topActivity.getPackageName();
-                }
-            }
-            Log.d(TAG, "onEinkMenuClick name: " + topPackageName);
-            for (String temp: BLACK_EINK_CONFIG_APP) {
-                if (temp.equals(topPackageName)) {
-                    Toast.makeText(mContext, R.string.eink_dialog_not_allow, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        popupHandler.sendEmptyMessageDelayed(0, 100);
-    }
-
     private boolean onHomeTouch(View v, MotionEvent event) {
         if (mHomeBlockedThisTouch && event.getActionMasked() != MotionEvent.ACTION_DOWN) {
             return true;
@@ -1171,7 +1060,6 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
         // and his ONLY options are to answer or reject the call.)
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                dismissEinkDialog();
                 mHomeBlockedThisTouch = false;
                 TelecomManager telecomManager =
                         getContext().getSystemService(TelecomManager.class);
@@ -1229,7 +1117,6 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     private boolean onRecentsTouch(View v, MotionEvent event) {
         int action = event.getAction() & MotionEvent.ACTION_MASK;
         if (action == MotionEvent.ACTION_DOWN) {
-            dismissEinkDialog();
             mCommandQueue.preloadRecentApps();
         } else if (action == MotionEvent.ACTION_CANCEL) {
             mCommandQueue.cancelPreloadRecentApps();
@@ -1661,33 +1548,5 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
     @VisibleForTesting
     int getNavigationIconHints() {
         return mNavigationIconHints;
-    }
-
-    /**
-     * 普通dialog
-     */
-    private void showAlterDialog(){
-        if(!isShowEinkDialog) {
-            mEinkDialog = new EinkDialog(mContext);
-            mEinkDialog.getWindow().setType((WindowManager.LayoutParams.TYPE_SYSTEM_DIALOG));
-            mEinkDialog.setCanceledOnTouchOutside(true);
-            mEinkDialog.show();
-            mEinkDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                @Override
-                public void onCancel(DialogInterface dialog) {
-                    isShowEinkDialog = false;
-                    Log.d(TAG, "onCancel: ");
-                }
-            });
-        } else {
-            Log.d(TAG, "isShowEinkDialog: " + isShowEinkDialog);
-        }
-    }
-
-    private void dismissEinkDialog() {
-        if (null != mEinkDialog && mEinkDialog.isShowing()) {
-            mEinkDialog.dismissAllDialog();
-            mEinkDialog = null;
-        }
     }
 }

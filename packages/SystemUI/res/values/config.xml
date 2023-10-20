@@ -106,7 +106,7 @@
 
     <!-- The default tiles to display in QuickSettings -->
     <string name="quick_settings_tiles_default" translatable="false">
-        wifi,bt,dnd,flashlight,rotation,battery,cell,airplane,cast,screenrecord
+        wifi,bt,dnd,flashlight,rotation,cell,airplane,cast,screenrecord
     </string>
 
     <!-- The minimum number of tiles to display in QuickSettings -->
@@ -114,7 +114,7 @@
 
     <!-- Tiles native to System UI. Order should match "quick_settings_tiles_default" -->
     <string name="quick_settings_tiles_stock" translatable="false">
-        wifi,cell,battery,dnd,flashlight,rotation,bt,airplane,location,hotspot,inversion,saver,dark,work,cast,night,screenrecord,reverse
+        wifi,cell,dnd,flashlight,rotation,bt,airplane,location,hotspot,inversion,saver,dark,work,cast,night,screenrecord,reverse
     </string>
 
     <!-- The tiles to display in QuickSettings -->
@@ -341,7 +341,7 @@
     </string-array>
 
     <!-- Nav bar button default ordering/layout -->
-    <string name="config_navBarLayout" translatable="false">left[.5W];volume_sub,back,home,recent,volume_add,refresh,switch_mode,eink_menu,screenshot;right[.5W]</string>
+    <string name="config_navBarLayout" translatable="false">left[.5W];volume_sub,back,home,recent,volume_add,screenshot;right[.5W]</string>
     <string name="config_navBarLayoutQuickstep" translatable="false">back[1.7WC];home;contextual[1.7WC]</string>
     <string name="config_navBarLayoutHandle" translatable="false">back[40AC];home_handle;ime_switcher[40AC]</string>
 
@@ -536,7 +536,7 @@
      -->
     <string-array name="config_statusBarIconBlackList" translatable="false">
         <item>@*android:string/status_bar_rotate</item>
-        <item>@*android:string/status_bar_headset</item>
+        <item>@*android:string/status_bar_battery</item>
     </string-array>
 
     <!-- A path similar to frameworks/base/core/res/res/values/config.xml

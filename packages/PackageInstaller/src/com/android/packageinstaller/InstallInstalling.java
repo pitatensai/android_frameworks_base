@@ -49,7 +49,7 @@ import java.io.OutputStream;
  * <p>This has two phases: First send the data to the package manager, then wait until the package
  * manager processed the result.</p>
  */
-public class InstallInstalling extends BaseAlertActivity {
+public class InstallInstalling extends AlertActivity {
     private static final String LOG_TAG = InstallInstalling.class.getSimpleName();
 
     private static final String SESSION_ID = "com.android.packageinstaller.SESSION_ID";

@@ -43,7 +43,6 @@
 #include <utils/misc.h>
 #include <utils/String8.h>
 #include <utils/Log.h>
-#include <suspend/autosuspend.h>
 
 #include "com_android_server_power_PowerManagerService.h"
 
@@ -63,7 +62,6 @@ using IPowerV1_0 = android::hardware::power::V1_0::IPower;
 using IPowerAidl = android::hardware::power::IPower;
 
 namespace android {
-static bool gScreenOn;
 
 // ----------------------------------------------------------------------------
 
@@ -389,7 +387,6 @@ void enableAutoSuspend() {
     {
         std::lock_guard<std::mutex> lock(gSuspendMutex);
         if (gSuspendBlocker) {
-            //ALOGD("enableAutoSuspend gSuspendBlocker->release()");
             gSuspendBlocker->release();
             gSuspendBlocker.clear();
         }
@@ -400,7 +397,6 @@ void disableAutoSuspend() {
     std::lock_guard<std::mutex> lock(gSuspendMutex);
     if (!gSuspendBlocker) {
         sp<ISystemSuspend> suspendHal = getSuspendHal();
-        //ALOGD("disableAutoSuspend acquireWakeLock PowerManager.SuspendLockout");
         gSuspendBlocker = suspendHal->acquireWakeLock(WakeLockType::PARTIAL,
                 "PowerManager.SuspendLockout");
     }
@@ -418,13 +414,11 @@ static void nativeInit(JNIEnv* env, jobject obj) {
 
 static void nativeAcquireSuspendBlocker(JNIEnv *env, jclass /* clazz */, jstring nameStr) {
     ScopedUtfChars name(env, nameStr);
-    //ALOGD("nativeAcquireSuspendBlocker %s",name.c_str());
     acquire_wake_lock(PARTIAL_WAKE_LOCK, name.c_str());
 }
 
 static void nativeReleaseSuspendBlocker(JNIEnv *env, jclass /* clazz */, jstring nameStr) {
     ScopedUtfChars name(env, nameStr);
-    //ALOGD("nativeReleaseSuspendBlocker %s",name.c_str());
     release_wake_lock(name.c_str());
 }
 
@@ -463,18 +457,13 @@ static void nativeSetInteractive(JNIEnv* /* env */, jclass /* clazz */, jboolean
 static void nativeSetAutoSuspend(JNIEnv* /* env */, jclass /* clazz */, jboolean enable) {
     if (enable) {
         android::base::Timer t;
-        gScreenOn = false;
-        autosuspend_idle(false);
         enableAutoSuspend();
-        //ALOGD("nativeSetAutoSuspend enableAutoSuspend");
         if (t.duration() > 100ms) {
             ALOGD("Excessive delay in autosuspend_enable() while turning screen off");
         }
     } else {
         android::base::Timer t;
-        gScreenOn = true;
         disableAutoSuspend();
-        //ALOGD("nativeSetAutoSuspend disableAutoSuspend");
         if (t.duration() > 100ms) {
             ALOGD("Excessive delay in autosuspend_disable() while turning screen on");
         }
@@ -522,14 +511,6 @@ static void nativeSetFeature(JNIEnv* /* env */, jclass /* clazz */, jint feature
     }
 }
 
-void android_server_PowerManagerService_idle() {
-    autosuspend_idle(gScreenOn);
-}
-void android_server_PowerManagerService_wake() {
-    autosuspend_wake();
-}
-
-
 static bool nativeForceSuspend(JNIEnv* /* env */, jclass /* clazz */) {
     bool retval = false;
     getSuspendControl()->forceSuspend(&retval);
@@ -552,9 +533,6 @@ static const JNINativeMethod gPowerManagerServiceMethods[] = {
         {"nativeSetPowerBoost", "(II)V", (void*)nativeSetPowerBoost},
         {"nativeSetPowerMode", "(IZ)Z", (void*)nativeSetPowerMode},
         {"nativeSetFeature", "(II)V", (void*)nativeSetFeature},
-        { "nativeIdle", "()V", (void*) android_server_PowerManagerService_idle },
-        { "nativeWake", "()V", (void*) android_server_PowerManagerService_wake },
-
 };
 
 #define FIND_CLASS(var, className) \
@@ -587,7 +565,6 @@ int register_android_server_PowerManagerService(JNIEnv* env) {
     for (int i = 0; i <= USER_ACTIVITY_EVENT_LAST; i++) {
         gLastEventTime[i] = LLONG_MIN;
     }
-    gScreenOn = true;
     gPowerManagerServiceObj = NULL;
     return 0;
 }

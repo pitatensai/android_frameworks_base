@@ -64,6 +64,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_PRIVILEGED" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_PRIVILEGED_PHONE_STATE" />
@@ -772,11 +773,7 @@
             android:exported="false"
             android:grantUriPermissions="true">
         </provider>
-        <provider
-            android:name=".statusbar.phone.EinkSettingsProvider"
-            android:authorities="com.android.systemui.eink"
-            android:enabled="true"
-            android:exported="true" />
+
         <receiver
             android:name=".statusbar.KeyboardShortcutsReceiver">
             <intent-filter>

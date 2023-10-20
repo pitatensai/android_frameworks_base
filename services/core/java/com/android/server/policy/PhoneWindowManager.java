@@ -26,6 +26,7 @@ import static android.content.Context.WINDOW_SERVICE;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.content.pm.PackageManager.FEATURE_HDMI_CEC;
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
+import static android.content.pm.PackageManager.FEATURE_TELEVISION;
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
@@ -158,6 +159,10 @@ import android.service.dreams.IDreamManager;
 import android.service.vr.IPersistentVrStateCallbacks;
 import android.speech.RecognizerIntent;
 import android.telecom.TelecomManager;
+import android.text.TextUtils;
+import android.util.ArraySet;
+import android.util.DisplayMetrics;
+import android.util.EventLog;
 import android.util.Log;
 import android.util.LongSparseArray;
 import android.util.MutableBoolean;
@@ -634,6 +639,51 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final int MSG_POWER_VERY_LONG_PRESS = 25;
     private static final int MSG_RINGER_TOGGLE_CHORD = 26;
 
+    private int screenWidth;
+    private int screenHeight;
+    private String mstate = null;
+    private float mdeltax, mdeltay;
+    boolean keydown;
+
+    public Handler mKeyMouseHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            switch(msg.what){
+            case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT:
+                mdeltax = -1.0f;
+                mdeltay = 0;
+                break;
+            case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_RIGHT:
+                mdeltax = 1.0f;
+                mdeltay = 0;
+                break;
+            case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP:
+                mdeltax = 0;
+                mdeltay = -1.0f;
+                break;
+            case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN:
+                mdeltax = 0;
+                mdeltay = 1.0f;
+                break;
+            case KeyEvent.KEYCODE_PROFILE_SWITCH:
+                mdeltax = 0;
+                mdeltay = 0;
+                break;
+            default:
+                break;
+            }
+
+            try {
+                mWindowManager.dispatchMouse(mdeltax,mdeltay,screenWidth,screenHeight);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+
+            if (keydown) {
+                mKeyMouseHandler.sendEmptyMessageDelayed(msg.what,30);
+            }
+        }
+    };
+
     private class PolicyHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
@@ -1093,7 +1143,20 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 case SHORT_PRESS_POWER_NOTHING:
                     break;
                 case SHORT_PRESS_POWER_GO_TO_SLEEP:
-                    goToSleepFromPowerButton(eventTime, 0);
+                    String product = SystemProperties.get("ro.target.product","");
+                    if (!TextUtils.isEmpty(product) && (product.equals("box") || product.equals("atv"))) {
+                        int powerKey = SystemProperties.getInt("persist.sys.power_key",0);
+                        Slog.i("ROCKCHIP", "powerKey = " + powerKey);
+                        if (powerKey == 1) {
+                            shutDown();
+                        } else if (powerKey == 2) {
+                            reboot();
+                        } else {
+                            goToSleepFromPowerButton(eventTime, 0);
+                        }
+                    } else {
+                        goToSleepFromPowerButton(eventTime, 0);
+                    }
                     break;
                 case SHORT_PRESS_POWER_REALLY_GO_TO_SLEEP:
                     goToSleepFromPowerButton(eventTime, PowerManager.GO_TO_SLEEP_FLAG_NO_DOZE);
@@ -1153,6 +1216,25 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         goToSleep(eventTime, PowerManager.GO_TO_SLEEP_REASON_POWER_BUTTON, flags);
         return true;
+    }
+
+    //add by wengtao for Power Key Definition
+    private void reboot() {
+        Intent reboot = new Intent(Intent.ACTION_REBOOT);
+        reboot.putExtra("nowait",1);
+        reboot.putExtra("interval",1);
+        reboot.putExtra("window",0);
+        mContext.sendBroadcast(reboot);
+    }
+
+    //add by wengtao for Power Key Definition
+    private void shutDown() {
+        Intent shutDown = new Intent(Intent.ACTION_REQUEST_SHUTDOWN);
+        shutDown.putExtra(Intent.EXTRA_KEY_CONFIRM, false);
+        shutDown.putExtra(Intent.EXTRA_REASON, PowerManager.SHUTDOWN_REASON_SHUTDOWN);
+        shutDown.putExtra(Intent.EXTRA_USER_REQUESTED_SHUTDOWN, false);
+        shutDown.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivityAsUser(shutDown, UserHandle.CURRENT);
     }
 
     private void goToSleep(long eventTime, int reason, int flags) {
@@ -1691,6 +1773,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
 
         private void handleLongPressOnHome(int deviceId) {
+            if (mHasFeatureLeanback && mShortPressOnWindowBehavior == SHORT_PRESS_WINDOW_PICTURE_IN_PICTURE) {
+                if (mPictureInPictureVisible) {
+                    mHandler.removeMessages(MSG_SHOW_PICTURE_IN_PICTURE_MENU);
+                    Message msg = mHandler.obtainMessage(MSG_SHOW_PICTURE_IN_PICTURE_MENU);
+                    msg.setAsynchronous(true);
+                    msg.sendToTarget();
+                }
+            }
+
             if (mLongPressOnHomeBehavior == LONG_PRESS_HOME_NOTHING) {
                 return;
             }
@@ -1749,7 +1840,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mDisplayManager = mContext.getSystemService(DisplayManager.class);
         mPackageManager = mContext.getPackageManager();
         mHasFeatureWatch = mPackageManager.hasSystemFeature(FEATURE_WATCH);
-        mHasFeatureLeanback = mPackageManager.hasSystemFeature(FEATURE_LEANBACK);
+        mHasFeatureLeanback = mPackageManager.hasSystemFeature(FEATURE_LEANBACK)
+            || mPackageManager.hasSystemFeature(FEATURE_TELEVISION)
+            || "box".equals(SystemProperties.get("ro.target.product"));
         mHasFeatureAuto = mPackageManager.hasSystemFeature(FEATURE_AUTOMOTIVE);
         mHasFeatureHdmiCec = mPackageManager.hasSystemFeature(FEATURE_HDMI_CEC);
         mAccessibilityShortcutController =
@@ -2585,6 +2678,26 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             Log.d(TAG, "interceptKeyTi keyCode=" + keyCode + " down=" + down + " repeatCount="
                     + repeatCount + " keyguardOn=" + keyguardOn + " canceled=" + canceled);
         }
+
+        //infrare simulate mouse
+        boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
+        if(isBox){
+           mstate = SystemProperties.get("sys.KeyMouse.mKeyMouseState");
+           if (mstate.equals("on") && ((keyCode == KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT)
+                || (keyCode == KeyEvent.KEYCODE_SYSTEM_NAVIGATION_RIGHT)
+                || (keyCode == KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP)
+                || (keyCode == KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN)
+                || (keyCode == KeyEvent.KEYCODE_PROFILE_SWITCH))) {
+            keydown = down;
+            mKeyMouseHandler.sendEmptyMessage(keyCode);
+            //return -1;
+           }
+
+           if (mstate.equals("on") && ((keyCode == KeyEvent.KEYCODE_ENTER)
+                ||(keyCode == KeyEvent.KEYCODE_DPAD_CENTER))) {
+            return -1;
+           }
+         }
 
         // If we think we might have a volume down & power key chord on the way
         // but we're not sure, then tell the dispatcher to wait a little while and
@@ -3633,8 +3746,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         // Basic policy based on interactive state.
         int result;
+        boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
         boolean isWakeKey = (policyFlags & WindowManagerPolicy.FLAG_WAKE) != 0
                 || event.isWakeKey();
+        if (isBox) {
+            isWakeKey = false;
+        }
+        if (isBox && keyCode == KeyEvent.KEYCODE_POWER &&
+        "true".equals(SystemProperties.get("persist.sys.poweroff_now"))) {
+            SystemProperties.set("sys.powerctl", "shutdown");
+            return 0;
+        }
+
         if (interactive || (isInjected && !isWakeKey)) {
             // When the device is interactive or the key is injected pass the
             // key to the application.
@@ -3871,8 +3994,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT:
                 // fall through
             case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_RIGHT: {
+               if(!isBox){
                 result &= ~ACTION_PASS_TO_USER;
                 interceptSystemNavigationKey(event);
+               }
                 break;
             }
 
@@ -4862,7 +4987,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             @Override public void run() {
                 if (mBootMsgDialog == null) {
                     int theme;
-                    if (mPackageManager.hasSystemFeature(FEATURE_LEANBACK)) {
+                    if (mPackageManager.hasSystemFeature(FEATURE_LEANBACK)
+                        || mPackageManager.hasSystemFeature(FEATURE_TELEVISION)) {
                         theme = com.android.internal.R.style.Theme_Leanback_Dialog_Alert;
                     } else {
                         theme = 0;

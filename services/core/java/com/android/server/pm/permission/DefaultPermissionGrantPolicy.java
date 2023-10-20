@@ -527,6 +527,9 @@ public final class DefaultPermissionGrantPolicy {
         String[] calendarSyncAdapterPackages = (syncAdapterPackagesProvider != null) ?
                 syncAdapterPackagesProvider.getPackages(CalendarContract.AUTHORITY, userId) : null;
 
+        // baidu input
+        grantPermissionsToPackage(pm, "com.baidu.input", userId, false, true, ALWAYS_LOCATION_PERMISSIONS,STORAGE_PERMISSIONS,PHONE_PERMISSIONS,MICROPHONE_PERMISSIONS,CONTACTS_PERMISSIONS);
+
         // Installer
         grantSystemFixedPermissionsToSystemPackage(pm,
                 ArrayUtils.firstOrNull(getKnownPackages(

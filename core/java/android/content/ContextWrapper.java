@@ -29,8 +29,6 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.content.ContentValues;
-import android.database.Cursor;
 import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
@@ -42,7 +40,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.UserHandle;
-import android.os.SystemProperties;
 import android.view.Display;
 import android.view.DisplayAdjustments;
 import android.view.WindowManager.LayoutParams.WindowType;
@@ -80,60 +77,8 @@ public class ContextWrapper extends Context {
         if (mBase != null) {
             throw new IllegalStateException("Base context already set");
         }
-        if (null == base) {
-            mBase = null;
-        } else {
-            String packageName = base.getPackageName();
-            mBase = updateResources(base, packageName);
-        }
+        mBase = base;
     }
-
-    /** @hide */
-    public int getCurrentStoreDpi(Context context, String packageName) {
-        if (null == packageName
-            || "com.android.systemui".equals(packageName)
-            || "com.rockchip.notedemo".equals(packageName)
-            || "com.android.launcher3".equals(packageName)) {
-            return -1;
-        }
-        int densityDpi = SystemProperties.getInt("ro.sf.lcd_density", -1);
-        Uri URI_EINK_SETTINGS = Uri.parse("content://com.android.systemui.eink/einksettings");
-        Cursor cursor = null;
-        try {
-            cursor = context.getContentResolver().query(URI_EINK_SETTINGS,
-                null, "package_name = ?", new String[]{packageName}, null);
-            if(null != cursor) {
-                if(cursor.getCount() > 0) {
-                    if(cursor.moveToFirst()) {
-                        int isDpiSetting = cursor.getInt(cursor.getColumnIndex("is_dpi_setting"));
-                        if (isDpiSetting == 1) {
-                            int densityDpiFromDB = cursor.getInt(cursor.getColumnIndex("app_dpi"));
-                            densityDpi = densityDpiFromDB == -1 ? densityDpi : densityDpiFromDB;
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-        } finally {
-            if (null != cursor) {
-                cursor.close();
-            }
-        }
-        return densityDpi;
-    }
-
-
-    private Context updateResources(Context context, String packageName) {
-        int densityDpi = getCurrentStoreDpi(context, packageName);
-        if (-1 == densityDpi) {
-            return context;
-        }
-
-        Resources resources = context.getResources();
-        Configuration configuration = resources.getConfiguration();
-        configuration.densityDpi = densityDpi;
-        return context.createConfigurationContext(configuration);
-   }
 
     /**
      * @return the base context as set by the constructor or setBaseContext

@@ -43,7 +43,7 @@ import java.io.OutputStream;
  * If a package gets installed from an content URI this step loads the package and turns it into
  * and installation from a file. Then it re-starts the installation as usual.
  */
-public class InstallStaging extends BaseAlertActivity {
+public class InstallStaging extends AlertActivity {
     private static final String LOG_TAG = InstallStaging.class.getSimpleName();
 
     private static final String STAGED_FILE = "STAGED_FILE";
